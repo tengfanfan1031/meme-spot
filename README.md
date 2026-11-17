@@ -2,18 +2,18 @@
 
 A two-player, head-to-head spot-the-difference race for team lunches. Cast it to a TV so everyone can watch.
 
-**Play:** https://tengfanfan1031.github.io/meme-spot-duel--mini-game/
+**Play:** https://tengfanfan1031.github.io/meme-spot/
 
 ## How it works
 
-- 10 levels, each with a pair of meme pictures and 5 differences, from easy to hard (levels 1–2 are a warm-up, 9–10 are insane).
+- 15 levels, each with a pair of meme pictures and 5 differences, from easy to hard (levels 1–3 are a warm-up, 13–15 are insane).
 - Both players see the same pair. **Whoever taps a difference first gets the point**, and it shows up on the other player's screen right away.
-- Tap either picture. A wrong tap freezes you for 2 seconds.
-- Each level has a time limit (60–90 s). When time runs out, the missed differences are circled in yellow.
+- Tap either picture. A wrong tap freezes you for 3 seconds, and you need to tap close to the difference.
+- Each level has a time limit (48–80 s). When time runs out, the missed differences are circled in yellow.
 - Highest total wins. On a tie, fewer misses wins.
 - Each level has 6 possible differences and every match picks 5 at random, so rematches are not identical.
 
-Memes: Doge, Moo Deng, This Is Fine, Capybara Spa, Chill Guy, Woman Yelling at Cat, Two Buttons, Distracted Boyfriend, Stonks, Vibing DJ Cat. All pictures are original SVG tributes drawn from scratch, not the original images.
+Memes: Doge, Moo Deng, This Is Fine, Capybara Spa, Chill Guy, Woman Yelling at Cat, Two Buttons, Distracted Boyfriend, Stonks, Vibing DJ Cat, plus five office-life levels: This Meeting Could Have Been an Email, Reply All Storm, Microwave Queue, Printer Jam, and Is It Friday Yet? All pictures are original SVG tributes drawn from scratch, not the original images.
 
 ## Start a match
 
