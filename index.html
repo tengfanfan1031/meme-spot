@@ -773,7 +773,9 @@ body.tv .ov { min-height: 50vh; }
           c.on('error', () => {});
           return;
         }
-        const busy = (conn && conn.open) || (G && !['room', 'over'].includes(G.phase));
+        // 比賽中拒絕新連線；在房間裡則以新連線取代舊的（對手重試連線時會發生）
+        const busy = G && !['room', 'over'].includes(G.phase);
+        if (!busy && conn) { const old = conn; conn = null; try { old.close(); } catch {} }
         if (busy) { c.on('open', () => { try { c.send({ t: 'full' }); } catch {} setTimeout(() => c.close(), 500); }); return; }
         c.on('open', () => {
           conn = c; setConn(true, 'Connected');
@@ -813,24 +815,36 @@ body.tv .ov { min-height: 50vh; }
     if (role === 'tv') beep(1, .01, 'sine', .0001); // 用這次點擊解鎖電視的音效
     const p = new Peer();
     let opened = false;
-    const timer = setTimeout(() => { if (!opened) { $('lobbyMsg').textContent = 'Could not reach that room. Check the code, or ask your opponent to create a new room.'; lockLobby(false); p.destroy(); } }, 12000);
+    const timer = setTimeout(() => { if (!opened) { $('lobbyMsg').textContent = 'Could not reach that room. Check the code, or ask your opponent to create a new room.'; lockLobby(false); p.destroy(); } }, 20000);
     p.on('open', () => {
       peer = p;
+      // 網絡慢時第一次連線可能卡住：6 秒未通就關掉重連，最多 3 次
+      const attempt = n => {
       const c = p.connect(PREFIX + code.toLowerCase(), { reliable: true, metadata: { role, nick } });
+      const retry = setTimeout(() => {
+        if (opened || n >= 2) return;
+        try { c.close(); } catch {}
+        $('lobbyMsg').textContent = 'Still connecting, trying again…';
+        attempt(n + 1);
+      }, 6000);
       c.on('open', () => {
+        clearTimeout(retry);
+        if (opened) { try { c.close(); } catch {} return; }
         opened = true; clearTimeout(timer); lockLobby(false);
         conn = c; isHost = false; solo = false; roomCode = code;
         tvMode = role === 'tv'; myIdx = tvMode ? -1 : 1;
         setConn(true, tvMode ? 'Watching' : 'Connected');
         if (tvMode) enterTV(code);
       });
-      c.on('data', onData);
+      c.on('data', m => { if (conn === c) onData(m); });
       c.on('close', () => {
         if (conn !== c) return;
         conn = null; setConn(false, 'Host left');
         if (tvMode) { $('banner').hidden = false; $('banner').innerHTML = 'The host left the room.<small>Refresh this page and enter the new room code.</small>'; return; }
         S = null; show('lobby'); $('lobbyMsg').textContent = 'The host left the room. Create a new room or join another.';
       });
+      };
+      attempt(0);
     });
     p.on('error', e => {
       clearTimeout(timer); if (opened) return;
