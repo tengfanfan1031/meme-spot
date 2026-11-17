@@ -1,0 +1,961 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Meme Spot Duel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Inter:wght@500;700;900&display=swap">
+<style>
+/* 版面概念：貼紙感的粗黑框＋錯位陰影，像迷因截圖貼在桌上；藍色是玩家一、桃紅是玩家二 */
+:root {
+  --bg: #fff6e6; --panel: #fffdf8; --ink: #1d1a16; --muted: #6f675c; --line: #1d1a16; --sh: #1d1a16;
+  --p1: #2f6bff; --p2: #ff2e6e; --ok: #14a35a; --bad: #e5372f; --hl: #ffd43b;
+  --font-d: "Bungee", "Inter", system-ui, sans-serif;
+  --font-b: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #191713; --panel: #25221d; --ink: #f6efe2; --muted: #b3a996; --line: #f6efe2; --sh: #000;
+  --p1: #6f98ff; --p2: #ff6b98; --ok: #42d17f; --bad: #ff6a5f; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #191713; --panel: #25221d; --ink: #f6efe2; --muted: #b3a996; --line: #f6efe2; --sh: #000;
+  --p1: #6f98ff; --p2: #ff6b98; --ok: #42d17f; --bad: #ff6a5f; color-scheme: dark }
+
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-b); font-size: 15px;
+  padding: 14px max(16px, env(safe-area-inset-right, 0px)) 24px max(16px, env(safe-area-inset-left, 0px));
+  -webkit-tap-highlight-color: transparent;
+}
+.wrap { max-width: 540px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
+header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+h1 { margin: 0; font-weight: 900; font-size: 28px; line-height: 1.1; }
+h1 small { display: block; font-family: var(--font-d); font-weight: 400; font-size: 12px; letter-spacing: .14em; color: var(--muted); }
+.conn { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.dot.on { background: var(--ok); }
+
+.card { background: var(--panel); border: 3px solid var(--line); border-radius: 16px; box-shadow: 5px 5px 0 var(--sh); padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+.card h2 { margin: 0; font-size: 19px; font-weight: 900; }
+.hint { color: var(--muted); font-size: 13px; line-height: 1.65; margin: 0; }
+label { font-size: 12px; color: var(--muted); font-weight: 700; display: block; margin-bottom: 6px; }
+input[type=text] { width: 100%; box-sizing: border-box; font: inherit; font-size: 16px; padding: 10px 12px; border: 2px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--ink); }
+input#code { font-family: var(--font-d); letter-spacing: .25em; text-transform: uppercase; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; }
+.row > * { flex: 1 1 auto; }
+button { font: inherit; font-weight: 900; font-size: 15px; padding: 11px 16px; border-radius: 12px; cursor: pointer; border: 2.5px solid var(--line); background: var(--hl); color: #1d1a16; box-shadow: 3px 3px 0 var(--sh); }
+button:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--sh); }
+button.ghost { background: var(--panel); color: var(--ink); }
+button:disabled { opacity: .45; cursor: not-allowed; }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--p1); outline-offset: 2px; }
+
+.codebig { font-family: var(--font-d); font-size: 36px; letter-spacing: .25em; }
+.plist { display: flex; flex-direction: column; gap: 10px; }
+.pl { display: grid; grid-template-columns: 14px 1fr auto; align-items: center; gap: 10px; }
+.pl .sw { width: 14px; height: 14px; border-radius: 4px; border: 2px solid var(--line); }
+.pl .nm { font-weight: 900; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pl .nm em { font-style: normal; font-weight: 500; color: var(--muted); font-size: 12px; margin-left: 6px; }
+.pill { font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 99px; border: 2px solid var(--line); white-space: nowrap; }
+.pill.ready { background: var(--ok); color: #fff; border-color: var(--ok); }
+.legend { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; font-size: 11px; color: var(--muted); text-align: center; }
+.legend div { padding: 6px 0; border-radius: 8px; background: var(--bg); border: 1.5px solid color-mix(in oklab, var(--line) 25%, transparent); line-height: 1.4; }
+.memes { display: flex; flex-wrap: wrap; gap: 6px; }
+.memes span { font-size: 12px; padding: 3px 9px; border-radius: 99px; background: var(--bg); border: 1.5px solid color-mix(in oklab, var(--line) 30%, transparent); }
+
+/* ---------- 遊戲畫面 ---------- */
+#game { display: flex; flex-direction: column; gap: 8px; }
+.sb { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; }
+.pc { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 6px 10px; border-radius: 12px; border: 2.5px solid var(--line); background: var(--panel); box-shadow: 3px 3px 0 var(--sh); }
+.pc.r { justify-content: flex-end; }
+.pc .nm { font-weight: 900; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }
+.pc .sc { font-family: var(--font-d); font-size: 26px; line-height: 1; font-variant-numeric: tabular-nums; }
+.pc.p0 { border-color: var(--p1); } .pc.p0 .sc { color: var(--p1); }
+.pc.p1 { border-color: var(--p2); } .pc.p1 .sc { color: var(--p2); }
+.pc.me { background: color-mix(in oklab, var(--hl) 35%, var(--panel)); }
+.mid { text-align: center; }
+.lvl { font-size: 12px; font-weight: 900; color: var(--muted); white-space: nowrap; }
+.tm { font-family: var(--font-d); font-size: 28px; line-height: 1; font-variant-numeric: tabular-nums; }
+.tm.low { color: var(--bad); }
+.info { display: flex; justify-content: space-between; align-items: center; gap: 10px; min-height: 26px; }
+.info .nmz { font-weight: 900; font-size: 15px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dots { display: flex; gap: 5px; flex: 0 0 auto; }
+.dots i { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--line); background: transparent; }
+.banner { text-align: center; font-weight: 900; font-size: 16px; padding: 8px 10px; border-radius: 12px; background: var(--hl); color: #1d1a16; border: 2.5px solid var(--line); }
+.banner small { display: block; font-weight: 500; font-size: 12px; }
+
+.stage { position: relative; }
+.pics { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.pic { margin: 0; position: relative; width: 100%; max-width: calc((100svh - 200px) / 2 * 4 / 3); }
+.pic figcaption { position: absolute; z-index: 2; left: 8px; top: 8px; font-size: 11px; font-weight: 900; padding: 2px 8px; border-radius: 99px; background: #1d1a16; color: #fff; pointer-events: none; }
+.svgbox { aspect-ratio: 4 / 3; border: 3px solid var(--line); border-radius: 12px; overflow: hidden; background: #fff; box-shadow: 4px 4px 0 var(--sh); touch-action: manipulation; user-select: none; -webkit-user-select: none; cursor: crosshair; }
+.svgbox svg { display: block; width: 100%; height: 100%; }
+@media (min-width: 720px) and (min-aspect-ratio: 1/1) {
+  .wrap.wide { max-width: 1280px; }
+  .pics { flex-direction: row; justify-content: center; }
+  .pic { flex: 1 1 0; max-width: calc((100vh - 190px) * 4 / 3); }
+}
+.stage.shake .pics { animation: shake .3s; }
+@keyframes shake { 25% { transform: translateX(-7px) } 75% { transform: translateX(7px) } }
+.ov { position: absolute; inset: -4px; z-index: 5; border-radius: 16px; display: grid; place-items: center; text-align: center; background: var(--bg); border: 3px solid var(--line); }
+.ov .big { font-family: var(--font-d); font-size: clamp(90px, 22vw, 360px); line-height: 1; }
+.ov .sub { font-weight: 900; font-size: clamp(16px, 2.2vw, 40px); }
+.lockov { position: absolute; inset: 0; z-index: 4; display: grid; place-items: center; pointer-events: none; }
+.lockov span { font-weight: 900; font-size: 20px; padding: 10px 18px; border-radius: 14px; background: var(--bad); color: #fff; border: 3px solid #1d1a16; box-shadow: 4px 4px 0 #1d1a16; }
+.foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.foot button { padding: 7px 12px; font-size: 13px; }
+
+/* SVG 標記動畫 */
+.mk { animation: popin .35s ease-out; transform-box: fill-box; transform-origin: center; }
+@keyframes popin { from { transform: scale(1.8); opacity: 0 } to { transform: scale(1); opacity: 1 } }
+.rv { animation: blink 1s ease-in-out infinite; }
+@keyframes blink { 50% { opacity: .35 } }
+.pulse { animation: pulse .7s ease-out forwards; transform-box: fill-box; transform-origin: center; }
+@keyframes pulse { from { opacity: .9; transform: scale(.3) } to { opacity: 0; transform: scale(1.6) } }
+.xm { animation: xfade 1.1s forwards; }
+@keyframes xfade { 0%, 70% { opacity: 1 } 100% { opacity: 0 } }
+
+/* 結果 */
+.rank { display: grid; grid-template-columns: 34px 1fr auto; gap: 8px; align-items: center; padding: 10px 0; border-bottom: 2px dashed color-mix(in oklab, var(--line) 25%, transparent); }
+.rank:last-child { border-bottom: 0; }
+.rank b { font-family: var(--font-d); font-size: 22px; }
+.rank .t { font-family: var(--font-d); font-size: 22px; }
+table.hist { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.hist th, table.hist td { padding: 5px 4px; text-align: center; border-bottom: 1px solid color-mix(in oklab, var(--line) 18%, transparent); }
+table.hist th:first-child, table.hist td:first-child { text-align: left; }
+table.hist td.w { font-weight: 900; }
+@media (prefers-reduced-motion: reduce) { .stage.shake .pics, .mk, .pulse, .rv { animation: none; } }
+
+/* ---------- 電視觀戰：大字、雙圖並排、不可點 ---------- */
+#tvHead { display: none; }
+body.tv { padding: 2vh 2.5vw; overflow: hidden; }
+body.tv header, body.tv .foot, body.tv #gameHint { display: none; }
+body.tv .wrap { max-width: 1800px; gap: 1.6vh; }
+body.tv #tvHead { display: flex; justify-content: space-between; align-items: center; gap: 12px 24px; flex-wrap: wrap; }
+.tvt { margin: 0; font-weight: 900; font-size: clamp(24px, 2.8vw, 56px); line-height: 1; }
+.tvt small { font-family: var(--font-d); font-weight: 400; font-size: .4em; letter-spacing: .14em; color: var(--muted); margin-left: .5em; }
+.tvj { font-size: clamp(14px, 1.4vw, 26px); color: var(--muted); display: flex; align-items: baseline; gap: .5em; flex-wrap: wrap; }
+.tvj b { font-family: var(--font-d); color: var(--ink); letter-spacing: .18em; font-size: 1.5em; font-weight: 400; }
+.tvj .url { color: var(--ink); font-weight: 900; }
+body.tv .pc { padding: .8vh 1.2vw; border-width: 4px; }
+body.tv .pc .nm { font-size: clamp(18px, 2.2vw, 44px); }
+body.tv .pc .sc { font-size: clamp(30px, 3.8vw, 76px); }
+body.tv .lvl { font-size: clamp(14px, 1.4vw, 28px); }
+body.tv .tm { font-size: clamp(30px, 3.6vw, 72px); }
+body.tv .info .nmz { font-size: clamp(16px, 1.8vw, 36px); }
+body.tv .dots i { width: clamp(14px, 1.6vw, 32px); height: clamp(14px, 1.6vw, 32px); border-width: 3px; }
+body.tv .banner { font-size: clamp(18px, 2.2vw, 44px); }
+body.tv .banner small { font-size: .5em; }
+body.tv .pics { flex-direction: row; justify-content: center; gap: 2vw; }
+body.tv .pic { flex: 1 1 0; max-width: calc((100vh - 30vh) * 4 / 3); }
+body.tv .pic figcaption { font-size: clamp(12px, 1.2vw, 22px); }
+body.tv .svgbox { cursor: default; border-width: 4px; }
+body.tv .ov { min-height: 50vh; }
+.tvov h3 { margin: 0 0 1vh; font-size: clamp(28px, 4vw, 80px); font-weight: 900; }
+.tvov p { margin: .6vh 0; font-size: clamp(16px, 1.8vw, 36px); color: var(--muted); }
+.tvov .who { display: flex; gap: 3vw; justify-content: center; margin-top: 2vh; font-size: clamp(18px, 2.4vw, 48px); font-weight: 900; }
+.tvov .who span { padding: .4em .9em; border-radius: 16px; border: 4px solid currentColor; }
+</style>
+</head>
+<body>
+
+<div class="wrap" id="wrap">
+  <header>
+    <h1>Meme Spot Duel<small>FIND THE 5 DIFFERENCES</small></h1>
+    <div class="conn"><span class="dot" id="dot"></span><span id="connTxt">Offline</span></div>
+  </header>
+
+  <!-- 電視頂部 -->
+  <div id="tvHead">
+    <h2 class="tvt">Meme Spot Duel<small>FIND THE 5 DIFFERENCES</small></h2>
+    <div class="tvj">Play at <span class="url" id="tvUrl"></span> · Room <b id="tvCode"></b></div>
+  </div>
+
+  <!-- 大廳 -->
+  <section id="lobby" class="card">
+    <h2>Two players · 10 levels · 5 differences each</h2>
+    <p class="hint">You both see the same pair of pictures. Whoever taps a difference first gets the point. Tap either picture. A wrong tap freezes you for 2 seconds. 10 levels from easy to hard. Highest total score wins.</p>
+    <div class="memes" aria-label="Memes">
+      <span>Doge</span><span>Moo Deng</span><span>This is fine</span><span>Capybara Spa</span><span>Chill Guy</span><span>Woman Yelling at Cat</span><span>Two Buttons</span><span>Distracted BF</span><span>Stonks</span><span>Vibing DJ Cat</span>
+    </div>
+    <div>
+      <label for="nick">Your name</label>
+      <input type="text" id="nick" maxlength="10" placeholder="e.g. Alex" autocomplete="off">
+    </div>
+    <div class="row">
+      <button id="hostBtn">Create room</button>
+      <button id="soloBtn" class="ghost">Practice solo</button>
+    </div>
+    <div>
+      <label for="code">Or enter a room code</label>
+      <div class="row">
+        <input type="text" id="code" maxlength="6" autocomplete="off" placeholder="e.g. K7QH" style="flex:1 1 120px">
+        <button id="joinBtn" class="ghost" style="flex:0 0 auto">Join</button>
+        <button id="tvBtn" class="ghost" style="flex:0 0 auto">Watch on TV</button>
+      </div>
+    </div>
+    <p class="hint" id="lobbyMsg">One player taps “Create room” and shares the code. The other enters it and taps “Join”. To show the match on a big screen, open this page on the TV computer, enter the same code and tap “Watch on TV”.</p>
+    <div class="legend" aria-label="Difficulty">
+      <div>Lv 1–2<br>Warm-up</div><div>Lv 3–4<br>Easy</div><div>Lv 5–6<br>Medium</div><div>Lv 7–8<br>Hard</div><div>Lv 9–10<br>Insane</div>
+    </div>
+  </section>
+
+  <!-- 房間 -->
+  <section id="room" class="card" hidden>
+    <div class="row" style="align-items:center">
+      <div><label>Room code</label><div class="codebig" id="roomCode"></div></div>
+      <button id="leaveBtn" class="ghost" style="flex:0 0 auto">Leave</button>
+    </div>
+    <div class="plist" id="players"></div>
+    <p class="hint" id="roomMsg">Waiting for an opponent…</p>
+    <p class="hint" id="tvNote" hidden></p>
+    <button id="readyBtn">I’m ready</button>
+  </section>
+
+  <!-- 遊戲 -->
+  <section id="game" hidden>
+    <div class="sb">
+      <div class="pc p0" id="pc0"><span class="nm" id="n0"></span><b class="sc" id="s0" style="margin-left:auto">0</b></div>
+      <div class="mid"><div class="lvl" id="lvl"></div><div class="tm" id="tm">--</div></div>
+      <div class="pc p1 r" id="pc1"><b class="sc" id="s1" style="margin-right:auto">0</b><span class="nm" id="n1"></span></div>
+    </div>
+    <div class="info" id="info"><span class="nmz" id="lvName"></span><span class="dots" id="dots"></span></div>
+    <div class="banner" id="banner" hidden></div>
+    <div class="stage" id="stage">
+      <div class="pics">
+        <figure class="pic"><figcaption>ORIGINAL</figcaption><div class="svgbox" id="picA"></div></figure>
+        <figure class="pic"><figcaption>SPOT IT</figcaption><div class="svgbox" id="picB"></div></figure>
+      </div>
+      <div class="lockov" id="lockov" hidden><span id="lockTxt">Miss! Frozen 2 s</span></div>
+      <div class="ov" id="ov" hidden></div>
+    </div>
+    <div class="foot">
+      <p class="hint" id="gameHint">Tap either picture. A miss freezes you for 2 s.</p>
+      <button class="ghost" id="quitBtn">Leave</button>
+    </div>
+  </section>
+
+  <!-- 結果 -->
+  <section id="result" class="card" hidden>
+    <h2 id="resTitle">Finished!</h2>
+    <div id="resList"></div>
+    <table class="hist" id="hist"></table>
+    <p class="hint" id="resMsg"></p>
+    <div class="row"><button id="againBtn">Play again</button><button id="leave2Btn" class="ghost" style="flex:0 0 auto">Leave</button></div>
+  </section>
+</div>
+
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script>
+(() => {
+  const LV = 10, PICK = 5, LOCK_MS = 2000, TOL = 10, PREFIX = 'memediff-tw-';
+  // 每關時限（秒）：越後面越難，給多一點時間
+  const TIME = [60, 60, 60, 70, 70, 75, 80, 90, 90, 90];
+
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  function rng(seed) { let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  const randCode = () => Array.from({ length: 4 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random() * 32)]).join('');
+  function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch { return null; } }
+
+  // ================= 關卡圖（SVG，400×300） =================
+  // 每關定義 6 個候選差異，每局用 seed 抽 5 個；draw(h) 的 h(id) 為真時畫「改過」的版本
+  const K = '#2b2118';
+  const st = (w = 3) => `stroke="${K}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="round"`;
+  const COMIC = `font-family="'Comic Sans MS','Chalkboard SE','Comic Neue',cursive"`;
+  const BOLD = `font-family="Inter,'Arial Black',Arial,sans-serif" font-weight="900"`;
+  const rays = (cx, cy, r1, r2, n) => Array.from({ length: n }, (_, i) => { const a = i / n * Math.PI * 2; return `<line x1="${(cx + Math.cos(a) * r1).toFixed(1)}" y1="${(cy + Math.sin(a) * r1).toFixed(1)}" x2="${(cx + Math.cos(a) * r2).toFixed(1)}" y2="${(cy + Math.sin(a) * r2).toFixed(1)}" stroke="#f0a800" stroke-width="4" stroke-linecap="round"/>`; }).join('');
+  const flame = (x, y, s) => `<g transform="translate(${x} ${y}) scale(${s})"><path d="M0,0 C-24,0 -28,-24 -14,-40 C-12,-28 -5,-27 -3,-36 C-1,-52 9,-58 8,-70 C24,-56 30,-36 21,-18 C27,-22 29,-29 28,-34 C38,-16 24,0 0,0Z" fill="#ff5a1f" stroke="#c2361a" stroke-width="2"/><path d="M0,-2 C-12,-2 -14,-14 -7,-22 C-5,-16 -1,-16 0,-22 C2,-30 8,-33 7,-40 C15,-30 16,-18 11,-10 C14,-12 15,-15 14,-18 C20,-8 12,-2 0,-2Z" fill="#ffd23f"/></g>`;
+  const drop = (x, y) => `<path d="M${x},${y} q8,11 0,15 q-8,-4 0,-15Z" fill="#6ec3ff" ${st(1.5)}/>`;
+  const steam = (x, y) => `<path d="M${x},${y} q-10,-12 0,-24 q10,-12 0,-24" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".9"/>`;
+  const STARS = (() => { const r = rng(20261117); return Array.from({ length: 46 }, () => ({ x: r() * 400, y: r() * 300, s: .7 + r() * 1.5 })).filter(p => !(p.x > 100 && p.x < 300 && p.y > 110)); })();
+
+  const SCENES = [
+    { name: 'Doge', sub: 'wow such eyes',
+      diffs: [{ x: 72, y: 50, r: 36 }, { x: 162, y: 88, r: 22 }, { x: 200, y: 168, r: 20 }, { x: 350, y: 52, r: 40 }, { x: 325, y: 266, r: 32 }, { x: 166, y: 121, r: 16 }],
+      draw: h => `
+        <rect width="400" height="300" fill="#fff4c9"/><rect y="242" width="400" height="58" fill="#c9e7a3"/>
+        ${h(3) ? '' : `<g>${rays(350, 52, 32, 44, 10)}<circle cx="350" cy="52" r="24" fill="#ffcf3f" ${st()}/></g>`}
+        <ellipse cx="200" cy="248" rx="85" ry="45" fill="#e3a14a" ${st()}/>
+        <path d="M132,118 L148,48 L190,96 Z" fill="#e3a14a" ${st()}/><path d="M147,102 L152,68 L176,96 Z" fill="${h(1) ? '#5fb8e6' : '#f6b0a8'}"/>
+        <path d="M210,96 L252,48 L268,118 Z" fill="#e3a14a" ${st()}/><path d="M224,96 L248,68 L253,102 Z" fill="#f6b0a8"/>
+        <ellipse cx="200" cy="152" rx="80" ry="68" fill="#e3a14a" ${st()}/>
+        <ellipse cx="152" cy="174" rx="26" ry="20" fill="#fff3e0"/><ellipse cx="248" cy="174" rx="26" ry="20" fill="#fff3e0"/>
+        <ellipse cx="200" cy="186" rx="46" ry="30" fill="#fff3e0"/>
+        ${h(5) ? '' : '<ellipse cx="166" cy="121" rx="7" ry="5" fill="#fff3e0"/>'}<ellipse cx="234" cy="121" rx="7" ry="5" fill="#fff3e0"/>
+        <ellipse cx="170" cy="140" rx="13" ry="9" fill="#fff" ${st(2)}/><circle cx="178" cy="141" r="5.5" fill="#222"/>
+        <ellipse cx="230" cy="140" rx="13" ry="9" fill="#fff" ${st(2)}/><circle cx="238" cy="141" r="5.5" fill="#222"/>
+        <ellipse cx="200" cy="168" rx="14" ry="9" fill="${h(2) ? '#e8423a' : '#2b2118'}"/>
+        <path d="M184,186 Q200,199 216,186" fill="none" ${st()}/>
+        <path d="M146,214 Q200,240 254,214" fill="none" stroke="#d63a3a" stroke-width="10" stroke-linecap="round"/><circle cx="200" cy="229" r="7" fill="#ffc83d" ${st(2)}/>
+        ${h(4) ? '' : `<g><circle cx="304" cy="261" r="7" fill="#fff" ${st(2)}/><circle cx="304" cy="272" r="7" fill="#fff" ${st(2)}/><circle cx="346" cy="261" r="7" fill="#fff" ${st(2)}/><circle cx="346" cy="272" r="7" fill="#fff" ${st(2)}/><rect x="304" y="260" width="42" height="13" fill="#fff"/><line x1="306" y1="260" x2="344" y2="260" ${st(2)}/><line x1="306" y1="273" x2="344" y2="273" ${st(2)}/></g>`}
+        ${h(0) ? '' : `<text x="40" y="62" font-size="36" fill="#d63de0" ${COMIC}>wow</text>`}
+        <text x="16" y="216" font-size="22" fill="#2e6bff" ${COMIC}>such eyes</text>
+        <text x="283" y="130" font-size="19" fill="#18a558" ${COMIC}>very spot</text>
+        <text x="288" y="208" font-size="19" fill="#ff6d00" ${COMIC}>much lunch</text>` },
+
+    { name: 'Moo Deng', sub: 'the bounciest baby hippo',
+      diffs: [{ x: 178, y: 128, r: 20 }, { x: 330, y: 238, r: 38 }, { x: 222, y: 40, r: 36 }, { x: 122, y: 256, r: 18 }, { x: 178, y: 182, r: 18 }, { x: 330, y: 92, r: 28 }],
+      draw: h => `
+        <rect width="400" height="300" fill="#dff1f5"/>
+        <path d="M0,215 Q100,200 200,212 T400,208 V300 H0 Z" fill="#b98b5e"/>
+        <ellipse cx="95" cy="262" rx="78" ry="20" fill="#8fd3e8" stroke="#6bb3c9" stroke-width="2"/>
+        <circle cx="70" cy="258" r="6" fill="#fff" opacity=".85"/><circle cx="95" cy="266" r="5" fill="#fff" opacity=".85"/>${h(3) ? '' : '<circle cx="122" cy="256" r="7" fill="#fff" opacity=".85"/>'}
+        <ellipse cx="330" cy="240" rx="36" ry="27" fill="${h(1) ? '#7cc451' : '#f59b2b'}" ${st()}/><path d="M318,216 Q306,240 318,264" fill="none" ${st(2)}/><path d="M342,216 Q354,240 342,264" fill="none" ${st(2)}/><rect x="326" y="203" width="8" height="13" fill="#5a8f2e" ${st(2)}/>
+        ${h(5) ? '' : `<g><ellipse cx="320" cy="88" rx="11" ry="8" fill="#ff9ecb" ${st(2)}/><ellipse cx="340" cy="88" rx="11" ry="8" fill="#ffe066" ${st(2)}/><line x1="330" y1="80" x2="330" y2="100" ${st(2.5)}/></g>`}
+        <rect x="175" y="232" width="22" height="24" rx="6" fill="#8f8aa0" ${st()}/><rect x="205" y="236" width="22" height="22" rx="6" fill="#8f8aa0" ${st()}/><rect x="255" y="232" width="22" height="24" rx="6" fill="#8f8aa0" ${st()}/><rect x="282" y="228" width="20" height="24" rx="6" fill="#8f8aa0" ${st()}/>
+        <path d="M312,196 q14,-4 16,8" fill="none" ${st(3)}/>
+        <ellipse cx="235" cy="205" rx="80" ry="48" fill="#9a96ab" ${st()}/>
+        <ellipse cx="250" cy="184" rx="36" ry="11" fill="#fff" opacity=".35"/>
+        <ellipse cx="128" cy="130" rx="9" ry="7" fill="#9a96ab" ${st(2)}/>${h(0) ? '' : `<ellipse cx="178" cy="128" rx="9" ry="7" fill="#9a96ab" ${st(2)}/>`}
+        <ellipse cx="150" cy="172" rx="55" ry="46" fill="#a6a2b6" ${st()}/>
+        <ellipse cx="140" cy="150" rx="18" ry="6" fill="#fff" opacity=".35"/>
+        <ellipse cx="128" cy="198" rx="42" ry="26" fill="#d7aebf" ${st()}/>
+        <ellipse cx="112" cy="188" rx="4" ry="3" fill="#6b4c5a"/><ellipse cx="138" cy="186" rx="4" ry="3" fill="#6b4c5a"/>
+        <path d="M100,206 Q128,224 156,206 Q128,214 100,206Z" fill="#7a3048" ${st(2)}/>
+        <circle cx="132" cy="154" r="5" fill="#222"/><circle cx="170" cy="152" r="5" fill="#222"/><circle cx="134" cy="152" r="1.6" fill="#fff"/><circle cx="172" cy="150" r="1.6" fill="#fff"/>
+        ${h(4) ? '' : '<ellipse cx="178" cy="182" rx="11" ry="7" fill="#ff8fb1" opacity=".9"/>'}
+        <text x="200" y="54" text-anchor="middle" font-size="36" fill="#e85a8a" stroke="#fff" stroke-width="7" paint-order="stroke" font-family="'Arial Black','Noto Sans TC',sans-serif" font-weight="900">${h(2) ? 'MOO DONG' : 'MOO DENG'}</text>
+        <text x="200" y="78" text-anchor="middle" font-size="16" fill="#7a3048" ${BOLD}>extra bouncy today</text>` },
+
+    { name: 'This Is Fine', sub: 'coffee first, fire later',
+      diffs: [{ x: 223, y: 182, r: 24 }, { x: 118, y: 90, r: 26 }, { x: 73, y: 77, r: 34 }, { x: 345, y: 196, r: 32 }, { x: 284, y: 84, r: 18 }, { x: 257, y: 224, r: 22 }],
+      draw: h => `
+        <rect width="400" height="300" fill="#f0b25a"/><rect y="236" width="400" height="64" fill="#9b5e36"/>
+        <g fill="#7d7d7d" opacity=".75"><ellipse cx="60" cy="10" rx="70" ry="28"/><ellipse cx="175" cy="4" rx="80" ry="26"/><ellipse cx="295" cy="12" rx="90" ry="30"/><ellipse cx="390" cy="6" rx="50" ry="24"/></g>
+        <rect x="36" y="48" width="74" height="58" fill="#fffaf0" stroke="#6b3d1f" stroke-width="5"/>
+        <path d="M39,103 Q60,80 80,92 T107,88 V103Z" fill="#7cc451"/><circle cx="60" cy="68" r="10" fill="${h(2) ? '#6e8bff' : '#ffcf3f'}"/>
+        ${flame(300, 238, 1.1)}${h(3) ? '' : flame(345, 238, 1.3)}${flame(388, 238, 1.0)}${flame(16, 238, .9)}${flame(382, 150, .7)}
+        <rect x="160" y="208" width="10" height="30" fill="#7a4220" ${st(2)}/>${h(5) ? '' : `<rect x="252" y="208" width="10" height="30" fill="#7a4220" ${st(2)}/>`}
+        <rect x="150" y="196" width="120" height="12" fill="#8a4b25" ${st()}/>
+        <rect x="210" y="170" width="26" height="26" rx="3" fill="${h(0) ? '#4a8af0' : '#ffffff'}" ${st()}/><path d="M236,176 q12,0 12,9 q0,9 -12,9" fill="none" ${st()}/>
+        <rect x="80" y="158" width="72" height="80" rx="26" fill="#f5d06a" ${st()}/>
+        <path d="M140,190 Q165,196 182,196" fill="none" stroke="${K}" stroke-width="14" stroke-linecap="round"/><path d="M140,190 Q165,196 182,196" fill="none" stroke="#f5d06a" stroke-width="9" stroke-linecap="round"/>
+        <circle cx="118" cy="128" r="36" fill="#f5d06a" ${st()}/>
+        <ellipse cx="86" cy="134" rx="10" ry="22" fill="#a8662f" ${st(2)}/><ellipse cx="150" cy="134" rx="10" ry="22" fill="#a8662f" ${st(2)}/>
+        <circle cx="106" cy="124" r="4" fill="#222"/><circle cx="132" cy="124" r="4" fill="#222"/>
+        <ellipse cx="120" cy="144" rx="15" ry="10" fill="#fff0c2"/><circle cx="120" cy="138" r="4.5" fill="#222"/><path d="M112,148 q8,6 16,0" fill="none" ${st(2)}/>
+        ${h(1) ? '' : `<path d="M86,104 Q118,96 150,104 L150,109 Q118,101 86,109Z" fill="#3b2a20"/><path d="M98,104 Q100,74 118,74 Q136,74 138,104Z" fill="#3b2a20" ${st(2)}/>`}
+        <path d="M196,100 L168,122 L214,108" fill="#fff" ${st()}/>
+        <ellipse cx="250" cy="84" rx="72" ry="30" fill="#fff" ${st()}/><path d="M199,103 L214,108" stroke="#fff" stroke-width="5"/>
+        <text x="250" y="92" text-anchor="middle" font-size="21" fill="${K}" ${BOLD}>${h(4) ? 'This is fire.' : 'This is fine.'}</text>` },
+
+    { name: 'Capybara Spa', sub: 'orange on head, zero worries',
+      diffs: [{ x: 197, y: 96, r: 22 }, { x: 90, y: 214, r: 22 }, { x: 305, y: 128, r: 24 }, { x: 215, y: 138, r: 16 }, { x: 350, y: 198, r: 26 }, { x: 36, y: 176, r: 22 }],
+      draw: h => `
+        <rect width="400" height="300" fill="#cde7f3"/>
+        <path d="M0,150 L70,92 L130,140 L200,82 L280,150 L340,102 L400,140 V300 H0Z" fill="#9cc3a8"/>
+        <rect y="160" width="400" height="140" fill="#b9a68a"/>
+        <ellipse cx="200" cy="225" rx="175" ry="60" fill="#7fc8e0"/>
+        <ellipse cx="35" cy="192" rx="30" ry="20" fill="#8f8f8f" ${st(2)}/><ellipse cx="120" cy="168" rx="26" ry="13" fill="#9a9a9a" ${st(2)}/><ellipse cx="290" cy="168" rx="30" ry="14" fill="#9a9a9a" ${st(2)}/>
+        <ellipse cx="350" cy="198" rx="${h(4) ? 16 : 28}" ry="${h(4) ? 11 : 18}" fill="#8f8f8f" ${st(2)}/>
+        <rect x="18" y="170" width="36" height="14" rx="4" fill="#fff" ${st(2)}/><line x1="28" y1="171" x2="28" y2="183" stroke="${h(5) ? '#3b7ddd' : '#e5484d'}" stroke-width="3"/><line x1="44" y1="171" x2="44" y2="183" stroke="${h(5) ? '#3b7ddd' : '#e5484d'}" stroke-width="3"/>
+        ${steam(80, 160)}${h(2) ? '' : steam(305, 152)}${steam(362, 160)}
+        <ellipse cx="215" cy="218" rx="85" ry="45" fill="#a5734a" ${st()}/>
+        <ellipse cx="168" cy="116" rx="10" ry="8" fill="#8e6040" ${st(2)}/>
+        <rect x="150" y="112" width="122" height="84" rx="36" fill="#a5734a" ${st()}/>
+        <ellipse cx="250" cy="162" rx="24" ry="28" fill="#8e6040"/>
+        <ellipse cx="266" cy="146" rx="3" ry="5" fill="#2b2118"/>
+        <path d="M244,182 q9,5 18,0" fill="none" ${st(2)}/>
+        ${h(3) ? '<circle cx="215" cy="138" r="5.5" fill="#222"/>' : `<path d="M207,137 Q215,144 223,137" fill="none" ${st()}/>`}
+        <circle cx="195" cy="100" r="16" fill="${h(0) ? '#e5383b' : '#ffb21f'}" ${st()}/><path d="M195,84 q6,-8 15,-4 q-6,7 -15,4Z" fill="#5a9e3a" ${st(2)}/>
+        <path d="M27,205 Q200,240 373,205 L374,232 Q200,292 26,232Z" fill="#7fc8e0" opacity=".96"/>
+        <ellipse cx="200" cy="225" rx="175" ry="60" fill="none" ${st()}/>
+        <path d="M120,236 q14,-5 28,0 M250,242 q14,-5 28,0 M180,262 q14,-5 28,0" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".8"/>
+        <g><ellipse cx="86" cy="222" rx="17" ry="11" fill="${h(1) ? '#ff8fc7' : '#ffd23f'}" ${st(2)}/><circle cx="96" cy="208" r="9" fill="${h(1) ? '#ff8fc7' : '#ffd23f'}" ${st(2)}/><path d="M104,206 l8,3 l-8,3Z" fill="#ff8a00" ${st(1.5)}/><circle cx="98" cy="205" r="1.8" fill="#222"/></g>` },
+
+    { name: 'Chill Guy', sub: 'just a chill guy at lunch',
+      diffs: [{ x: 205, y: 154, r: 22 }, { x: 227, y: 268, r: 22 }, { x: 245, y: 102, r: 14 }, { x: 180, y: 72, r: 18 }, { x: 331, y: 60, r: 28 }, { x: 183, y: 239, r: 14 }],
+      draw: h => `
+        <rect width="400" height="300" fill="#e8eef3"/><ellipse cx="205" cy="276" rx="80" ry="10" fill="#cfd8df"/>
+        ${h(4) ? '' : '<g fill="#fff" stroke="#b9c6d1" stroke-width="2"><path d="M300,74 a14,14 0 0 1 8,-26 a20,20 0 0 1 36,-4 a14,14 0 0 1 10,30Z"/></g>'}
+        <text x="24" y="44" font-size="22" fill="#2b2118" ${BOLD}>just a</text><text x="24" y="74" font-size="28" fill="#4a6fa5" font-family="'Arial Black',sans-serif" font-weight="900">chill guy</text>
+        <ellipse cx="183" cy="268" rx="22" ry="9" fill="#e04b3c" ${st()}/><ellipse cx="227" cy="268" rx="22" ry="9" fill="${h(1) ? '#f2f2f2' : '#e04b3c'}" ${st()}/>
+        <rect x="168" y="200" width="30" height="64" fill="#4a6fa5" ${st()}/><rect x="212" y="200" width="30" height="64" fill="#4a6fa5" ${st()}/>
+        ${h(5) ? '' : '<rect x="175" y="232" width="16" height="14" rx="2" fill="#7d9bd0" stroke="#2f4f80" stroke-width="1.5" stroke-dasharray="3 2"/>'}
+        <path d="M166,126 Q148,166 174,204" fill="none" stroke="${K}" stroke-width="26" stroke-linecap="round"/><path d="M244,126 Q262,166 236,204" fill="none" stroke="${K}" stroke-width="26" stroke-linecap="round"/>
+        <rect x="160" y="112" width="90" height="100" rx="24" fill="#9aa0a6" ${st()}/>
+        <path d="M166,126 Q148,166 174,204" fill="none" stroke="#9aa0a6" stroke-width="20" stroke-linecap="round"/><path d="M244,126 Q262,166 236,204" fill="none" stroke="#9aa0a6" stroke-width="20" stroke-linecap="round"/>
+        ${h(0) ? '' : '<rect x="163" y="150" width="84" height="9" fill="#fff" opacity=".85"/>'}
+        <path d="M178,206 h26 M216,206 h26" stroke="${K}" stroke-width="3"/>
+        <ellipse cx="205" cy="114" rx="26" ry="8" fill="#84898f" ${st(2)}/>
+        <ellipse cx="180" cy="72" rx="10" ry="22" transform="rotate(-18 180 72)" fill="${h(3) ? '#b07d4f' : '#6e4a2c'}" ${st(2)}/>
+        <ellipse cx="205" cy="80" rx="34" ry="34" fill="#b07d4f" ${st()}/>
+        <ellipse cx="238" cy="92" rx="28" ry="16" fill="#dcb892" ${st()}/><circle cx="263" cy="86" r="6" fill="#222"/>
+        <path d="M210,74 q8,-4 16,0" fill="none" ${st(3)}/><path d="M209,64 l16,-2" fill="none" ${st(2.5)}/>
+        ${h(2) ? `<path d="M234,104 Q245,97 256,104" fill="none" ${st(2.5)}/>` : `<path d="M234,101 Q246,108 257,99" fill="none" ${st(2.5)}/>`}` },
+
+    { name: 'Woman Yelling at Cat', sub: 'cat: what did I do?',
+      diffs: [{ x: 322, y: 222, r: 14 }, { x: 344, y: 147, r: 14 }, { x: 365, y: 214, r: 16 }, { x: 236, y: 228, r: 16 }, { x: 148, y: 43, r: 16 }, { x: 320, y: 88, r: 14 }],
+      draw: h => `
+        <rect width="400" height="300" fill="#fff"/>
+        <rect x="4" y="4" width="192" height="292" fill="#f6d5c3" ${st()}/><rect x="204" y="4" width="192" height="292" fill="#dfe9d6" ${st()}/>
+        <path d="M40,296 Q100,215 160,296Z" fill="#7d8bc9" ${st()}/>
+        <ellipse cx="96" cy="160" rx="58" ry="64" fill="#e6c25b"/>
+        <ellipse cx="100" cy="168" rx="44" ry="50" fill="#ffd9bf" ${st()}/>
+        <path d="M72,140 L94,149 M106,149 L128,140" ${st(4)}/>
+        <circle cx="86" cy="160" r="4" fill="#222"/><circle cx="114" cy="160" r="4" fill="#222"/>
+        <ellipse cx="102" cy="194" rx="14" ry="12" fill="#7a2030" ${st(2)}/>
+        <ellipse cx="72" cy="180" rx="8" ry="5" fill="#ff8f8f" opacity=".7"/><ellipse cx="130" cy="180" rx="8" ry="5" fill="#ff8f8f" opacity=".7"/>
+        <path d="M140,250 L188,214" stroke="${K}" stroke-width="18" stroke-linecap="round"/><path d="M140,250 L188,214" stroke="#ffd9bf" stroke-width="12" stroke-linecap="round"/>
+        <rect x="14" y="16" width="172" height="52" rx="22" fill="#fff" ${st()}/>
+        <text x="28" y="50" font-size="20" fill="#d0312d" ${BOLD}>MY SALAD${h(4) ? '!' : '!!'}</text>
+        <path d="M268,104 L274,70 L296,94Z" fill="#fff" ${st()}/><path d="M304,94 L326,70 L332,104Z" fill="#fff" ${st()}/>
+        <path d="M275,96 L278,79 L290,93Z" fill="#ffb3c1"/><path d="M310,93 L323,79 L327,98Z" fill="${h(5) ? '#e9e9e9' : '#ffb3c1'}"/>
+        <ellipse cx="300" cy="200" rx="46" ry="40" fill="#fff" ${st()}/>
+        <ellipse cx="300" cy="128" rx="40" ry="34" fill="#fff" ${st()}/>
+        <ellipse cx="286" cy="124" rx="5" ry="6" fill="#222"/><ellipse cx="314" cy="124" rx="5" ry="6" fill="#222"/>
+        <path d="M280,110 l10,4 M310,112 l10,-6" ${st(2)}/>
+        <path d="M296,136 h8 l-4,4Z" fill="#ff8fa3"/><path d="M292,146 q8,-4 16,0" fill="none" ${st(2)}/>
+        <path d="M276,138 L248,132 M276,141 L248,141 M277,144 L250,150 M324,138 L352,132 M324,141 L352,141" ${st(1.5)}/>${h(1) ? '' : `<path d="M323,144 L350,150" ${st(1.5)}/>`}
+        <rect x="204" y="214" width="192" height="82" fill="#fdfdfd" ${st()}/>
+        <ellipse cx="296" cy="230" rx="52" ry="13" fill="#fff" ${st(2)}/>
+        <ellipse cx="276" cy="224" rx="10" ry="6" fill="#6cbf4b"/><ellipse cx="292" cy="221" rx="11" ry="6" fill="#3f9b3a"/><ellipse cx="308" cy="224" rx="10" ry="6" fill="#6cbf4b"/>${h(0) ? '' : '<ellipse cx="322" cy="222" rx="9" ry="5" fill="#3f9b3a"/>'}<circle cx="300" cy="226" r="4" fill="#e5383b"/>
+        <path d="M356,196 L374,196 L371,232 L359,232Z" fill="#eaf6ff" ${st(2)}/>
+        ${h(2) ? '<path d="M359.6,222 L370.4,222 L370,230.5 L360,230.5Z" fill="#7cc6f0"/>' : '<path d="M357.6,204 L372.4,204 L370.6,230.5 L359.4,230.5Z" fill="#7cc6f0"/>'}
+        ${h(3) ? `<g><ellipse cx="236" cy="220" rx="6" ry="8" fill="#c4c4c4" ${st(1.5)}/><line x1="236" y1="228" x2="236" y2="246" stroke="#8a8a8a" stroke-width="3" stroke-linecap="round"/></g>` : `<g stroke="#8a8a8a" stroke-width="2.5" stroke-linecap="round"><line x1="236" y1="222" x2="236" y2="246"/><line x1="231" y1="212" x2="231" y2="222"/><line x1="236" y1="212" x2="236" y2="222"/><line x1="241" y1="212" x2="241" y2="222"/><line x1="231" y1="222" x2="241" y2="222"/></g>`}` },
+
+    { name: 'Two Buttons', sub: 'the daily dilemma',
+      diffs: [{ x: 224, y: 111, r: 16 }, { x: 258, y: 234, r: 14 }, { x: 270, y: 58, r: 22 }, { x: 179, y: 201, r: 14 }, { x: 284, y: 259, r: 18 }, { x: 346, y: 30, r: 12 }],
+      draw: h => `
+        <rect width="400" height="300" fill="#f4efe6"/>
+        <rect x="40" y="16" width="320" height="120" rx="14" fill="#3d4a5c" ${st()}/>
+        ${[[54, 30], [346, 30], [54, 122], [346, 122]].map(([x, y], i) => (i === 1 && h(5)) ? '' : `<circle cx="${x}" cy="${y}" r="5" fill="#9aa5b4" ${st(1.5)}/><line x1="${x - 3}" y1="${y}" x2="${x + 3}" y2="${y}" stroke="#3d4a5c" stroke-width="1.5"/>`).join('')}
+        <rect x="100" y="70" width="60" height="22" rx="4" fill="#8a8f99" ${st()}/><path d="M106,72 Q130,30 154,72Z" fill="#e53935" ${st()}/>
+        <rect x="240" y="70" width="60" height="22" rx="4" fill="#8a8f99" ${st()}/><path d="M246,72 Q270,30 294,72Z" fill="${h(2) ? '#f2704f' : '#e53935'}" ${st()}/>
+        <path d="M118,56 q6,-8 14,-10 M258,56 q6,-8 14,-10" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".6" fill="none"/>
+        <rect x="66" y="98" width="128" height="26" rx="5" fill="#fffbe6" ${st(2)}/><text x="130" y="116" text-anchor="middle" font-size="13" fill="${K}" ${BOLD}>Leave on time</text>
+        <rect x="206" y="98" width="128" height="26" rx="5" fill="#fffbe6" ${st(2)}/><text x="270" y="116" text-anchor="middle" font-size="13" fill="${K}" ${BOLD}>${h(0) ? 'Two' : 'One'} more meeting</text>
+        <line x1="0" y1="148" x2="400" y2="148" ${st(2)}/>
+        <circle cx="200" cy="222" r="56" fill="#ffd9b8" ${st()}/>
+        <path d="M146,214 Q150,160 200,160 Q250,160 254,214 Q236,184 200,186 Q164,184 146,214Z" fill="#3b2a20"/>
+        <path d="${h(3) ? 'M168,204 L190,198' : 'M168,197 L190,204'}" ${st(4)}/><path d="M210,204 L232,197" ${st(4)}/>
+        <circle cx="180" cy="215" r="5" fill="#222"/><circle cx="220" cy="215" r="5" fill="#222"/>
+        <path d="M180,250 q6,-6 12,0 q6,6 12,0 q6,-6 12,0" fill="none" ${st(2.5)}/>
+        ${drop(150, 192)}${drop(246, 186)}${h(1) ? '' : drop(258, 226)}
+        <rect x="262" y="236" width="44" height="50" rx="6" fill="#fff" ${st(2)}/>
+        <line x1="264" y1="252" x2="304" y2="252" stroke="${h(4) ? '#3fa34d' : '#2e86de'}" stroke-width="4"/><line x1="264" y1="266" x2="304" y2="266" stroke="${h(4) ? '#3fa34d' : '#2e86de'}" stroke-width="4"/>
+        <circle cx="270" cy="238" r="13" fill="#ffd9b8" ${st(2)}/>` },
+
+    { name: 'Distracted Boyfriend', sub: 'the diet lasted 5 minutes',
+      diffs: [{ x: 54, y: 72, r: 15 }, { x: 78, y: 203, r: 11 }, { x: 82, y: 131, r: 15 }, { x: 152, y: 146, r: 20 }, { x: 205, y: 176, r: 11 }, { x: 282, y: 98, r: 13 }],
+      draw: h => `
+        <rect width="400" height="300" fill="#bfe3ff"/>
+        <rect x="0" y="40" width="110" height="192" fill="#d9c3a5" ${st(2)}/>
+        ${[15, 45, 75].flatMap(x => [60, 100, 140].map(y => `<rect x="${x}" y="${y}" width="18" height="24" fill="${x === 45 && y === 60 && h(0) ? '#ffe066' : '#7d93b2'}" ${st(1.5)}/>`)).join('')}
+        <rect x="290" y="20" width="110" height="212" fill="#c9b7d9" ${st(2)}/>
+        ${[305, 335, 365].flatMap(x => [40, 80, 120, 160].map(y => `<rect x="${x}" y="${y}" width="18" height="24" fill="#7d93b2" ${st(1.5)}/>`)).join('')}
+        <rect y="230" width="400" height="70" fill="#cfcfcf"/><line x1="0" y1="232" x2="400" y2="232" ${st(2)}/>
+        <rect x="128" y="150" width="12" height="82" fill="#8b5a2b" ${st(2)}/>
+        <circle cx="116" cy="146" r="22" fill="#4caf50" ${st(2)}/><circle cx="152" cy="146" r="${h(3) ? 17 : 24}" fill="#4caf50" ${st(2)}/><circle cx="134" cy="128" r="32" fill="#5cbf60" ${st(2)}/>
+        <line x1="282" y1="92" x2="282" y2="232" stroke="#555" stroke-width="5"/><rect x="272" y="80" width="20" height="14" rx="3" fill="#555"/><circle cx="282" cy="98" r="6" fill="${h(5) ? '#ffffff' : '#ffd84d'}" ${st(1.5)}/>
+        <line x1="78" y1="150" x2="86" y2="112" stroke="${h(2) ? '#9b59b6' : '#ff6fa8'}" stroke-width="6" stroke-linecap="round"/>
+        <path d="M52,150 L92,150 L86,226 L58,226Z" fill="#e9c9a1" ${st(2)}/><ellipse cx="72" cy="150" rx="22" ry="5" fill="#fff" ${st(2)}/>
+        <circle cx="62" cy="214" r="4" fill="#3b2418"/><circle cx="72" cy="219" r="4" fill="#3b2418"/><circle cx="82" cy="214" r="4" fill="#3b2418"/><circle cx="66" cy="204" r="4" fill="#3b2418"/>${h(1) ? '' : '<circle cx="78" cy="203" r="4" fill="#3b2418"/>'}
+        <circle cx="66" cy="176" r="2.5" fill="#222"/><circle cx="80" cy="176" r="2.5" fill="#222"/><path d="M67,184 q6,5 12,0" fill="none" ${st(2)}/>
+        <path d="M64,226 L58,244 M80,226 L86,244" ${st(3)}/>
+        <rect x="189" y="194" width="13" height="38" fill="#333"/><rect x="208" y="194" width="13" height="38" fill="#333"/>
+        <rect x="185" y="138" width="40" height="58" rx="8" fill="#4f8ad6" ${st(2)}/>
+        <circle cx="205" cy="152" r="2.5" fill="#fff"/><circle cx="205" cy="164" r="2.5" fill="#fff"/>${h(4) ? '' : '<circle cx="205" cy="176" r="2.5" fill="#fff"/>'}
+        <circle cx="205" cy="118" r="20" fill="#f2c9a0" ${st(2)}/><path d="M185,114 Q188,96 205,96 Q222,96 225,112 Q210,104 192,110Z" fill="#3b2a20"/>
+        <circle cx="194" cy="118" r="2.5" fill="#222"/><circle cx="203" cy="118" r="2.5" fill="#222"/><ellipse cx="197" cy="129" rx="3" ry="3.5" fill="#7a2030"/>
+        <path d="M222,190 Q247,232 272,190Z" fill="#fff" ${st(2)}/>
+        <circle cx="230" cy="186" r="9" fill="#6cbf4b" ${st(1.5)}/><circle cx="246" cy="182" r="10" fill="#3f9b3a" ${st(1.5)}/><circle cx="261" cy="186" r="9" fill="#6cbf4b" ${st(1.5)}/><circle cx="252" cy="190" r="5" fill="#e5383b"/>
+        <path d="M234,200 l8,3 M260,200 l-8,3" ${st(2)}/><circle cx="239" cy="207" r="2.3" fill="#222"/><circle cx="253" cy="207" r="2.3" fill="#222"/>
+        <path d="M240,222 L236,244 M254,222 L258,244" ${st(3)}/>
+        <g font-size="15" fill="#fff" stroke="${K}" stroke-width="4" paint-order="stroke" text-anchor="middle" ${BOLD}><text x="72" y="270">Bubble tea</text><text x="205" y="264">Me</text><text x="252" y="270">Diet</text></g>` },
+
+    { name: 'Stonks', sub: 'buy high, sell never',
+      diffs: [{ x: 276, y: 165, r: 14 }, { x: 336, y: 104, r: 13 }, { x: 72, y: 262, r: 14 }, { x: 352, y: 82, r: 18 }, { x: 108, y: 38, r: 18 }, { x: 125, y: 112, r: 12 }],
+      draw: h => {
+        const tops = [200, 190, 175, 160, 150, 130, 110, 95], hs = [30, 24, 28, 22, 30, 26, 24, 28];
+        const candles = tops.map((t, i) => { const x = 150 + 30 * i; const red = i === 2 || i === 5 || (i === 4 && h(0)); const c = red ? '#ef4444' : '#22c55e';
+          return `${i === 6 && h(1) ? '' : `<line x1="${x + 6}" y1="${t - 12}" x2="${x + 6}" y2="${t + hs[i] + 10}" stroke="${c}" stroke-width="2"/>`}<rect x="${x}" y="${t}" width="12" height="${hs[i]}" fill="${c}"/>`; }).join('');
+        const pts = [[140, 250], [190, 212], [222, 226], [268, 160], [300, 176], [352, 82]];
+        const [px, py] = pts[pts.length - 2], [ex, ey] = pts[pts.length - 1];
+        const L = Math.hypot(ex - px, ey - py), ux = (ex - px) / L, uy = (ey - py) / L, s = h(3) ? 15 : 26;
+        const tip = [ex + ux * s * .55, ey + uy * s * .55], bx = ex - ux * s * .45, by = ey - uy * s * .45;
+        const head = `${tip[0].toFixed(1)},${tip[1].toFixed(1)} ${(bx - uy * s * .6).toFixed(1)},${(by + ux * s * .6).toFixed(1)} ${(bx + uy * s * .6).toFixed(1)},${(by - ux * s * .6).toFixed(1)}`;
+        const coin = (x, y) => `<circle cx="${x}" cy="${y}" r="10" fill="#ffc83d" stroke="#b8860b" stroke-width="2"/><text x="${x}" y="${y + 5}" text-anchor="middle" font-size="13" font-weight="900" fill="#8a5a00" font-family="Arial,sans-serif">$</text>`;
+        return `
+        <rect width="400" height="300" fill="#0f1d40"/>
+        <g stroke="#1f3570" stroke-width="1">${[40, 80, 120, 160, 200, 240, 280, 320, 360].map(x => `<line x1="${x}" y1="0" x2="${x}" y2="300"/>`).join('')}${[40, 80, 120, 160, 200, 240, 280].map(y => `<line x1="0" y1="${y}" x2="400" y2="${y}"/>`).join('')}</g>
+        ${candles}
+        <polyline points="${pts.map(p => p.join(',')).join(' ')}" fill="none" stroke="#7dffb3" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
+        <polygon points="${head}" fill="#7dffb3"/>
+        ${coin(200, 60)}${coin(250, 36)}${h(5) ? '' : coin(125, 112)}${coin(382, 200)}
+        <path d="M14,300 Q70,222 130,300Z" fill="#2d3748" stroke="#0a1022" stroke-width="2"/>
+        <path d="M58,236 L72,250 L86,236 L80,300 L64,300Z" fill="#fff"/>
+        <polygon points="72,242 79,252 72,292 65,252" fill="#d63a3a"/>
+        ${h(2) ? '' : '<path d="M67,256 L77,262 M66,268 L78,274 M66,280 L77,286" stroke="#ffd23f" stroke-width="2.5" stroke-linecap="round"/>'}
+        <ellipse cx="72" cy="198" rx="30" ry="36" fill="#f0c8a0" stroke="#0a1022" stroke-width="2"/>
+        <ellipse cx="64" cy="176" rx="10" ry="6" fill="#fff" opacity=".45"/>
+        <circle cx="70" cy="196" r="3.5" fill="#222"/><circle cx="88" cy="196" r="3.5" fill="#222"/><path d="M70,186 l8,-2 M86,184 l7,2" stroke="#222" stroke-width="2" stroke-linecap="round"/>
+        <path d="M70,216 q10,6 22,-2" fill="none" stroke="#222" stroke-width="2.5" stroke-linecap="round"/>
+        <text x="24" y="54" font-size="40" fill="#fff" letter-spacing="2" font-family="Impact,'Arial Black',sans-serif" font-weight="900">${h(4) ? 'STOCKS' : 'STONKS'}</text>`;
+      } },
+
+    { name: 'Vibing DJ Cat', sub: 'nod along to the beat',
+      diffs: [{ x: 150, y: 30, r: 10 }, { x: 330, y: 70, r: 26 }, { x: 241, y: 156, r: 12 }, { x: 268, y: 200, r: 14 }, { x: 200, y: 250, r: 10 }, { x: 64, y: 78, r: 10 }],
+      draw: h => `
+        <rect width="400" height="300" fill="#16123a"/>
+        ${STARS.map(p => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${p.s.toFixed(2)}" fill="#fff" opacity=".85"/>`).join('')}
+        ${h(0) ? '' : '<path d="M150,22 L152.5,28 L159,30 L152.5,32 L150,38 L147.5,32 L141,30 L147.5,28Z" fill="#fff6b3"/>'}
+        <circle cx="60" cy="88" r="26" fill="#d9d9e6"/><circle cx="52" cy="92" r="6" fill="#b9b9cc"/><circle cx="70" cy="100" r="4" fill="#b9b9cc"/>${h(5) ? '' : '<circle cx="64" cy="78" r="3.5" fill="#b9b9cc"/>'}
+        <circle cx="330" cy="70" r="28" fill="#f08a5d"/><path d="M308,62 q22,-8 44,0" stroke="#d9663b" stroke-width="4" fill="none"/>
+        <ellipse cx="330" cy="72" rx="50" ry="12" fill="none" stroke="${h(1) ? '#c9a7ff' : '#ffd27a'}" stroke-width="5" transform="rotate(-12 330 72)"/>
+        <text x="96" y="160" font-size="26" fill="#ffd27a">♪</text><text x="300" y="150" font-size="22" fill="#ff8fd0">♫</text>
+        <path d="M156,112 L164,82 L186,104Z" fill="#f2a65a" ${st(2)}/><path d="M214,104 L236,82 L244,112Z" fill="#f2a65a" ${st(2)}/>
+        <path d="M162,104 L166,90 L178,103Z" fill="#ffc9d6"/><path d="M222,103 L234,90 L238,104Z" fill="#ffc9d6"/>
+        <ellipse cx="200" cy="148" rx="50" ry="42" fill="#f2a65a" ${st(2)}/>
+        <path d="M188,110 l3,12 M200,108 v13 M212,110 l-3,12" stroke="#c7742f" stroke-width="3" stroke-linecap="round"/>
+        <path d="M176,142 q8,-7 16,0 M208,142 q8,-7 16,0" fill="none" ${st(2.5)}/>
+        <path d="M196,156 h8 l-4,4Z" fill="#ff8fa3"/><path d="M190,164 q5,5 10,0 q5,5 10,0" fill="none" ${st(2)}/>
+        <path d="M174,154 L150,150 M174,158 L150,160 M226,158 L250,160" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>${h(2) ? '' : '<path d="M226,154 L250,150" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>'}
+        <path d="M150,148 Q200,86 250,148" fill="none" stroke="#333" stroke-width="8" stroke-linecap="round"/>
+        <rect x="140" y="134" width="16" height="30" rx="6" fill="#ff4fa3" ${st(2)}/><rect x="244" y="134" width="16" height="30" rx="6" fill="#ff4fa3" ${st(2)}/>
+        ${h(3) ? '' : '<path d="M254,164 C262,186 272,196 282,220" fill="none" stroke="#bbb" stroke-width="2"/>'}
+        <rect x="110" y="220" width="180" height="62" rx="8" fill="#2a2a3d" stroke="#6b6b8f" stroke-width="2"/>
+        <circle cx="158" cy="246" r="24" fill="#111" stroke="#444" stroke-width="2"/><circle cx="158" cy="246" r="8" fill="#ff4fa3"/>
+        <circle cx="242" cy="246" r="24" fill="#111" stroke="#444" stroke-width="2"/><circle cx="242" cy="246" r="8" fill="#4fd1ff"/>
+        <circle cx="200" cy="234" r="4" fill="#4fd1ff"/><circle cx="200" cy="250" r="4" fill="${h(4) ? '#ff5d5d' : '#7dffb3'}"/><circle cx="200" cy="266" r="4" fill="#ffd27a"/>
+        <ellipse cx="165" cy="222" rx="14" ry="9" fill="#f2a65a" ${st(2)}/><ellipse cx="236" cy="222" rx="14" ry="9" fill="#f2a65a" ${st(2)}/>` },
+  ];
+
+  function pickDiffs(seed, lv) {
+    const r = rng((seed ^ Math.imul(lv + 1, 2654435761)) >>> 0);
+    const idx = SCENES[lv].diffs.map((_, i) => i);
+    for (let i = idx.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [idx[i], idx[j]] = [idx[j], idx[i]]; }
+    return idx.slice(0, PICK).sort((a, b) => a - b);
+  }
+
+  // ================= 音效 =================
+  let ac = null;
+  function beep(f, d, type = 'sine', v = .07, delay = 0) {
+    try {
+      ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+      const t = ac.currentTime + delay, o = ac.createOscillator(), g = ac.createGain();
+      o.type = type; o.frequency.value = f; g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+      o.connect(g).connect(ac.destination); o.start(t); o.stop(t + d);
+    } catch {}
+  }
+  const sndOk = () => { beep(880, .12); beep(1320, .18, 'sine', .07, .08); };
+  const sndMiss = () => beep(150, .25, 'square', .04);
+
+  // ================= 狀態 =================
+  const screens = ['lobby', 'room', 'game', 'result'];
+  let screen = 'lobby';
+  const show = s => { screen = s; screens.forEach(k => $(k).hidden = k !== s); $('wrap').classList.toggle('wide', s === 'game'); };
+
+  let peer = null, conn = null, isHost = false, solo = false, tvMode = false, myIdx = 0, roomCode = '';
+  let tvs = [];
+  let players = [];   // 房主端的權威名單：[0] 房主、[1] 加入者
+  let G = null;       // 房主端的權威遊戲狀態
+  let S = null;       // 所有角色收到的最新狀態
+  let deadline = 0, myLockUntil = 0;
+  const COLS = ['var(--p1)', 'var(--p2)'];
+  const blankP = nick => ({ nick, ready: false, gone: false });
+  const freshG = () => ({ phase: 'room', rid: null, seed: 0, lv: 0, found: [], scores: [0, 0], miss: [0, 0], hist: [], deadline: 0, lock: [0, 0], timeout: false });
+
+  function setConn(on, txt) { $('dot').classList.toggle('on', on); $('connTxt').textContent = txt; }
+  function lockLobby(on) { ['hostBtn', 'joinBtn', 'soloBtn', 'tvBtn'].forEach(id => $(id).disabled = on); }
+  function needNick() {
+    const nick = $('nick').value.trim().slice(0, 10);
+    if (!nick) { $('lobbyMsg').textContent = 'Please enter your name first.'; $('nick').focus(); return null; }
+    store('md-nick', nick); return nick;
+  }
+  const readCode = () => $('code').value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (typeof Peer === 'undefined') $('lobbyMsg').textContent = 'Could not load the multiplayer module. Check your connection and refresh. Solo practice still works.';
+
+  // ================= 房主邏輯（唯一裁判） =================
+  function sendAll(m) {
+    try { if (conn && conn.open) conn.send(m); } catch {}
+    tvs.forEach(c => { try { if (c.open) c.send(m); } catch {} });
+  }
+  function pub() {
+    const now = performance.now();
+    const m = { t: 'st', phase: G.phase, rid: G.rid, seed: G.seed, lv: G.lv, found: G.found.slice(), scores: G.scores.slice(), miss: G.miss.slice(),
+      hist: G.hist.slice(), timeout: G.timeout, left: Math.max(0, G.deadline - now), solo, code: roomCode,
+      players: players.map(p => p && { nick: p.nick, ready: p.ready, gone: !!p.gone }) };
+    sendAll(m); applyState(m);
+  }
+  function hostStart() {
+    Object.assign(G, { rid: 'r' + Date.now().toString(36), seed: Math.floor(Math.random() * 1e9), lv: 0, found: [], scores: [0, 0], miss: [0, 0], hist: [], lock: [0, 0], timeout: false, phase: 'count', deadline: performance.now() + 3000 });
+    players.forEach(p => p && (p.ready = false));
+    pub();
+  }
+  function maybeStart() {
+    if (!G || (G.phase !== 'room' && G.phase !== 'over')) return;
+    const need = solo ? 1 : 2;
+    const live = players.filter(p => p && !p.gone);
+    if (live.length === need && players.length === need && live.every(p => p.ready)) hostStart();
+  }
+  function startLevel(i) { Object.assign(G, { lv: i, found: [], timeout: false, lock: [0, 0], phase: 'play', deadline: performance.now() + TIME[i] * 1000 }); pub(); }
+  function endLevel(timeout) {
+    G.timeout = timeout;
+    G.hist[G.lv] = [0, 1].map(w => G.found.filter(f => f.who === w).length);
+    G.phase = 'between'; G.deadline = performance.now() + (timeout ? 5500 : 4000); pub();
+  }
+  function hostTick() {
+    if (!isHost || !G) return;
+    if (!['count', 'play', 'between'].includes(G.phase) || performance.now() < G.deadline) return;
+    if (G.phase === 'count') startLevel(0);
+    else if (G.phase === 'play') endLevel(true);
+    else if (G.lv + 1 < LV) startLevel(G.lv + 1);
+    else { G.phase = 'over'; G.deadline = 0; players.forEach(p => p && (p.ready = false)); pub(); }
+  }
+  setInterval(hostTick, 100);
+
+  function judge(who, lv, x, y) {
+    if (!G || G.phase !== 'play' || lv !== G.lv || (who !== 0 && who !== 1)) return;
+    x = +x; y = +y; if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+    const now = performance.now(); if (now < G.lock[who]) return;
+    const sel = pickDiffs(G.seed, G.lv), D = SCENES[G.lv].diffs;
+    let best = -1, bd = 1e9, onFound = false;
+    sel.forEach((id, k) => {
+      const d = D[id], dist = Math.hypot(d.x - x, d.y - y);
+      if (dist > d.r + TOL) return;
+      if (G.found.some(f => f.k === k)) { onFound = true; return; }
+      if (dist - d.r < bd) { bd = dist - d.r; best = k; }
+    });
+    if (best >= 0) {
+      G.found.push({ k: best, who }); G.scores[who]++;
+      ev({ who, lv, x, y, ok: true, k: best });
+      if (G.found.length >= PICK) endLevel(false); else pub();
+    } else if (!onFound) {
+      G.miss[who]++; G.lock[who] = now + LOCK_MS;
+      ev({ who, lv, x, y, ok: false }); pub();
+    }
+  }
+  function ev(e) { const m = { t: 'ev', ...e }; sendAll(m); onEv(m); }
+
+  // ================= 連線 =================
+  function renderTvNote() {
+    $('tvNote').hidden = !tvs.length;
+    $('tvNote').textContent = tvs.length === 1 ? 'TV view connected.' : `${tvs.length} TV views connected.`;
+  }
+
+  $('hostBtn').onclick = () => {
+    const nick = needNick(); if (!nick || typeof Peer === 'undefined') return;
+    lockLobby(true); $('lobbyMsg').textContent = 'Creating room…';
+    const tryOpen = attempt => {
+      const code = randCode();
+      const p = new Peer(PREFIX + code.toLowerCase());
+      p.on('open', () => {
+        peer = p; isHost = true; solo = false; tvMode = false; myIdx = 0; roomCode = code;
+        players = [blankP(nick)]; G = freshG();
+        setConn(true, 'Room open'); lockLobby(false); pub();
+      });
+      p.on('connection', c => {
+        const meta = c.metadata || {};
+        if (meta.role === 'tv') {
+          c.on('open', () => { tvs.push(c); renderTvNote(); pub(); });
+          c.on('close', () => { tvs = tvs.filter(x => x !== c); renderTvNote(); });
+          c.on('error', () => {});
+          return;
+        }
+        const busy = (conn && conn.open) || (G && !['room', 'over'].includes(G.phase));
+        if (busy) { c.on('open', () => { try { c.send({ t: 'full' }); } catch {} setTimeout(() => c.close(), 500); }); return; }
+        c.on('open', () => {
+          conn = c; setConn(true, 'Connected');
+          players = [players[0], blankP(String(meta.nick || 'Opponent').slice(0, 10))];
+          players[0].ready = false; G.phase = 'room'; pub();
+        });
+        c.on('data', m => onHostData(c, m));
+        c.on('close', () => {
+          if (conn !== c) return;
+          conn = null; setConn(true, 'Opponent left');
+          if (G.phase === 'room' || G.phase === 'over') { players = [players[0]]; G.phase = 'room'; }
+          else if (players[1]) players[1].gone = true;
+          pub();
+        });
+      });
+      p.on('error', e => {
+        if (e.type === 'unavailable-id' && attempt < 3) { p.destroy(); tryOpen(attempt + 1); return; }
+        if (!peer) { lockLobby(false); $('lobbyMsg').textContent = `Could not create a room (${e.type}). Please try again.`; p.destroy(); }
+      });
+      p.on('disconnected', () => { if (peer === p && !p.destroyed) { setConn(false, 'Reconnecting…'); p.reconnect(); } });
+    };
+    tryOpen(0);
+  };
+
+  function onHostData(c, m) {
+    if (c !== conn || !m || typeof m !== 'object') return;
+    if (m.t === 'rdy' && players[1]) { players[1].ready = !!m.v; pub(); maybeStart(); }
+    if (m.t === 'tap') judge(1, +m.lv, m.x, m.y);
+  }
+
+  function connectAs(role) {
+    const nick = role === 'player' ? needNick() : '';
+    if ((role === 'player' && !nick) || typeof Peer === 'undefined') return;
+    const code = readCode();
+    if (code.length < 4) { $('lobbyMsg').textContent = 'Enter the 4-character room code.'; $('code').focus(); return; }
+    lockLobby(true); $('lobbyMsg').textContent = role === 'tv' ? 'Connecting the TV view…' : 'Connecting…';
+    if (role === 'tv') beep(1, .01, 'sine', .0001); // 用這次點擊解鎖電視的音效
+    const p = new Peer();
+    let opened = false;
+    const timer = setTimeout(() => { if (!opened) { $('lobbyMsg').textContent = 'Could not reach that room. Check the code, or ask your opponent to create a new room.'; lockLobby(false); p.destroy(); } }, 12000);
+    p.on('open', () => {
+      peer = p;
+      const c = p.connect(PREFIX + code.toLowerCase(), { reliable: true, metadata: { role, nick } });
+      c.on('open', () => {
+        opened = true; clearTimeout(timer); lockLobby(false);
+        conn = c; isHost = false; solo = false; roomCode = code;
+        tvMode = role === 'tv'; myIdx = tvMode ? -1 : 1;
+        setConn(true, tvMode ? 'Watching' : 'Connected');
+        if (tvMode) enterTV(code);
+      });
+      c.on('data', onData);
+      c.on('close', () => {
+        if (conn !== c) return;
+        conn = null; setConn(false, 'Host left');
+        if (tvMode) { $('banner').hidden = false; $('banner').innerHTML = 'The host left the room.<small>Refresh this page and enter the new room code.</small>'; return; }
+        S = null; show('lobby'); $('lobbyMsg').textContent = 'The host left the room. Create a new room or join another.';
+      });
+    });
+    p.on('error', e => {
+      clearTimeout(timer); if (opened) return;
+      $('lobbyMsg').textContent = e.type === 'peer-unavailable' ? 'No room with that code. Check it and try again.' : `Connection failed (${e.type}). Please try again.`;
+      lockLobby(false); p.destroy(); peer = null;
+    });
+  }
+  $('joinBtn').onclick = () => connectAs('player');
+  $('tvBtn').onclick = () => connectAs('tv');
+
+  function onData(m) {
+    if (!m || typeof m !== 'object') return;
+    if (m.t === 'full') { $('lobbyMsg').textContent = 'That room is full or a match is in progress.'; leave(); return; }
+    if (m.t === 'st') applyState(m);
+    if (m.t === 'ev') onEv(m);
+  }
+
+  function leave() {
+    try { conn?.close(); } catch {} tvs.forEach(c => { try { c.close(); } catch {} }); try { peer?.destroy(); } catch {}
+    conn = null; peer = null; players = []; tvs = []; G = null; S = null; isHost = false; solo = false; picKey = '';
+    renderTvNote(); setConn(false, 'Offline'); show('lobby');
+  }
+  $('leaveBtn').onclick = $('quitBtn').onclick = $('leave2Btn').onclick = leave;
+
+  $('soloBtn').onclick = () => {
+    const nick = $('nick').value.trim().slice(0, 10) || 'You';
+    isHost = true; solo = true; tvMode = false; myIdx = 0; roomCode = '';
+    players = [blankP(nick)]; G = freshG(); players[0].ready = true; maybeStart();
+  };
+
+  $('readyBtn').onclick = $('againBtn').onclick = () => {
+    if (isHost) { if (solo) { hostStart(); return; } players[0].ready = !players[0].ready; pub(); maybeStart(); }
+    else if (S && S.players[1]) send({ t: 'rdy', v: !S.players[1].ready });
+  };
+  function send(m) { try { if (conn && conn.open) conn.send(m); } catch {} }
+
+  // ================= 畫面 =================
+  function applyState(m) {
+    if (!m || !Array.isArray(m.players)) return;
+    m.lv = Math.max(0, Math.min(LV - 1, +m.lv || 0));
+    if (S && S.rid === m.rid && S.lv === m.lv && S.phase === 'play' && m.phase === 'between') { /* 回合結束 */ }
+    S = m; deadline = performance.now() + (+m.left || 0);
+    if (S.phase !== 'play') { myLockUntil = 0; }
+    render();
+  }
+
+  function render() {
+    if (!S) return;
+    if (tvMode) { show('game'); renderGame(); return; }
+    if (S.phase === 'room') { show('room'); renderRoom(); }
+    else if (S.phase === 'over') { show('result'); renderResult(); }
+    else { show('game'); renderGame(); }
+  }
+
+  const pname = i => (S.players[i] && S.players[i].nick) || (i ? 'Player 2' : 'Player 1');
+
+  function renderRoom() {
+    $('roomCode').textContent = roomCode;
+    $('players').innerHTML = [0, 1].map(i => {
+      const p = S.players[i];
+      if (!p) return `<div class="pl"><span class="sw" style="background:${COLS[i]}"></span><span class="nm" style="color:var(--muted)">Waiting for a player…</span><span></span></div>`;
+      return `<div class="pl"><span class="sw" style="background:${COLS[i]}"></span><span class="nm">${esc(p.nick)}${i === myIdx ? '<em>you</em>' : ''}</span>${p.ready ? '<span class="pill ready">Ready</span>' : '<span class="pill">Not ready</span>'}</div>`;
+    }).join('');
+    const me = S.players[myIdx];
+    $('readyBtn').textContent = me && me.ready ? 'Cancel ready' : 'I’m ready';
+    const two = S.players.length === 2 && S.players.every(Boolean);
+    $('readyBtn').disabled = !two;
+    $('roomMsg').textContent = !two ? 'Share the room code above and wait for your opponent…' : 'The countdown starts when both players tap “I’m ready”.';
+  }
+
+  let picKey = '', picSel = [], drawn = new Set(), revealed = false;
+  function ensurePics() {
+    if (!S.rid) { if (picKey) { $('picA').innerHTML = $('picB').innerHTML = ''; picKey = ''; } return; }
+    const key = S.rid + ':' + S.lv;
+    if (key === picKey) return;
+    picKey = key; drawn = new Set(); revealed = false;
+    const sc = SCENES[S.lv]; picSel = pickDiffs(S.seed, S.lv);
+    const svg = right => `<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${esc(sc.name)}${right ? ' (changed)' : ' (original)'}">${sc.draw(id => right && picSel.includes(id))}<g class="marks"></g><g class="fx"></g></svg>`;
+    $('picA').innerHTML = svg(false); $('picB').innerHTML = svg(true);
+  }
+  const svgs = () => [$('picA').querySelector('svg'), $('picB').querySelector('svg')].filter(Boolean);
+  function addMark(d, who) {
+    const r = Math.max(d.r, 12) + 3;
+    const html = who < 0
+      ? `<g class="rv"><circle cx="${d.x}" cy="${d.y}" r="${r}" fill="none" stroke="#1d1a16" stroke-width="8"/><circle cx="${d.x}" cy="${d.y}" r="${r}" fill="none" stroke="#ffd43b" stroke-width="4" stroke-dasharray="6 5"/></g>`
+      : `<g class="mk"><circle cx="${d.x}" cy="${d.y}" r="${r}" fill="none" stroke="#fff" stroke-width="10"/><circle cx="${d.x}" cy="${d.y}" r="${r}" fill="none" style="stroke:${COLS[who]}" stroke-width="5"/></g>`;
+    svgs().forEach(s => s.querySelector('.marks').insertAdjacentHTML('beforeend', html));
+  }
+  function renderMarks() {
+    if (!S.rid) return;
+    const D = SCENES[S.lv].diffs;
+    S.found.forEach(f => { if (drawn.has(f.k) || !picSel[f.k] && picSel[f.k] !== 0) return; drawn.add(f.k); addMark(D[picSel[f.k]], f.who); });
+    if (S.phase === 'between' && S.timeout && !revealed) {
+      revealed = true;
+      picSel.forEach((id, k) => { if (!S.found.some(f => f.k === k)) addMark(D[id], -1); });
+    }
+  }
+
+  function renderGame() {
+    const solo1 = S.solo || S.players.length < 2;
+    const live = !!S.rid && S.phase !== 'room';
+    $('pc1').hidden = solo1 && !tvMode;
+    [0, 1].forEach(i => {
+      const p = S.players[i];
+      $('n' + i).textContent = p ? p.nick + (p.gone ? ' (left)' : '') : (tvMode ? 'Waiting…' : '');
+      $('s' + i).textContent = live ? (S.scores[i] || 0) : 0;
+      $('pc' + i).classList.toggle('me', i === myIdx && !solo1);
+    });
+    const sc = SCENES[S.lv];
+    $('lvl').textContent = live ? `Level ${S.lv + 1} / ${LV}` : '';
+    $('lvName').textContent = live ? `${sc.name} · ${sc.sub}` : '';
+    $('dots').innerHTML = !live ? '' : Array.from({ length: PICK }, (_, k) => { const f = S.found.find(x => x.k === k); return `<i style="${f ? `background:${COLS[f.who]};border-color:${COLS[f.who]}` : ''}"></i>`; }).join('');
+    ensurePics(); renderMarks();
+
+    // 關與關之間的橫幅
+    const b = $('banner');
+    if (S.phase === 'between') {
+      const h = S.hist[S.lv] || [0, 0], last = S.lv + 1 >= LV;
+      const parts = solo1 ? `Found ${h[0]} / ${PICK}` : `<span style="color:var(--p1)">${esc(pname(0))} +${h[0]}</span> &nbsp; <span style="color:var(--p2)">${esc(pname(1))} +${h[1]}</span>`;
+      b.innerHTML = `${S.timeout ? 'Time’s up! Yellow circles were missed.' : `Level ${S.lv + 1} cleared!`} &nbsp; ${parts}<small>${last ? 'Final results coming up…' : `Next: ${esc(SCENES[S.lv + 1].name)}`}</small>`;
+      b.hidden = false;
+    } else b.hidden = true;
+
+    // 覆蓋層：倒數、電視的等待與結果
+    const ov = $('ov');
+    if (S.phase === 'count') { ov.hidden = false; ov.innerHTML = `<div><div class="big" id="ovNum">3</div><div class="sub">Get ready! Level 1: ${esc(SCENES[0].name)}</div></div>`; }
+    else if (tvMode && S.phase === 'room') {
+      ov.hidden = false;
+      const ps = [0, 1].map(i => { const p = S.players[i]; return `<span style="color:${COLS[i]}">${p ? esc(p.nick) + (p.ready ? ' ✓' : '') : 'Waiting…'}</span>`; }).join('');
+      ov.innerHTML = `<div class="tvov"><h3>Meme Spot Duel · Waiting to start</h3><p>Open <b>${esc(location.host + location.pathname.replace(/index\.html$/, ''))}</b> on your phone and join room <b>${esc(roomCode)}</b></p><p>The match starts when both players tap “I’m ready”</p><div class="who">${ps}</div></div>`;
+    } else if (tvMode && S.phase === 'over') {
+      ov.hidden = false; ov.innerHTML = `<div class="tvov">${resultHTML(true)}</div>`;
+    } else ov.hidden = true;
+
+    const canTap = !tvMode && S.phase === 'play';
+    $('gameHint').textContent = canTap ? 'Tap either picture. A miss freezes you for 2 s.' : '';
+  }
+
+  function winner() {
+    const s = S.scores, m = S.miss;
+    if (s[0] !== s[1]) return s[0] > s[1] ? 0 : 1;
+    if (m[0] !== m[1]) return m[0] < m[1] ? 0 : 1;
+    return -1;
+  }
+  function resultHTML(tv) {
+    const two = !S.solo && S.players.length === 2;
+    if (!two) return `<h3>Practice done: ${S.scores[0]} / ${LV * PICK}</h3><p>${S.miss[0]} misses</p>`;
+    const w = winner();
+    const title = w < 0 ? 'It’s a tie!' : `${esc(pname(w))} wins!`;
+    const tie = w >= 0 && S.scores[0] === S.scores[1] ? '(Tied on points, fewer misses wins)' : '';
+    return `<h3>${title}</h3><p>${tie}</p><div class="who">${[0, 1].map(i => `<span style="color:${COLS[i]}">${esc(pname(i))} ${S.scores[i]} pts · ${S.miss[i]} misses</span>`).join('')}</div>`;
+  }
+  function renderResult() {
+    const two = !S.solo && S.players.length === 2;
+    const w = two ? winner() : -2;
+    $('resTitle').textContent = !two ? 'Practice complete!' : w < 0 ? 'It’s a tie!' : w === myIdx ? 'You win! 🎉' : `${pname(w)} wins`;
+    const idx = two ? [0, 1].sort((a, b) => (S.scores[b] - S.scores[a]) || (S.miss[a] - S.miss[b])) : [0];
+    $('resList').innerHTML = idx.map((i, n) => `<div class="rank"><b style="color:${COLS[i]}">${two ? n + 1 : '—'}</b><span>${esc(pname(i))}${i === myIdx && two ? ' (you)' : ''} · ${S.miss[i]} misses${S.players[i] && S.players[i].gone ? ' · left' : ''}</span><span class="t" style="color:${COLS[i]}">${S.scores[i]}</span></div>`).join('');
+    $('hist').innerHTML = `<tr><th>Level</th>${(two ? [0, 1] : [0]).map(i => `<th style="color:${COLS[i]}">${esc(pname(i))}</th>`).join('')}</tr>` +
+      SCENES.map((sc, l) => { const h = S.hist[l] || [0, 0]; return `<tr><td>${l + 1}. ${esc(sc.name)}</td>${(two ? [0, 1] : [0]).map(i => `<td class="${two && h[i] > h[1 - i] ? 'w' : ''}">${h[i]}</td>`).join('')}</tr>`; }).join('');
+    const me = S.players[myIdx];
+    const opGone = two && S.players.some(p => p && p.gone);
+    $('againBtn').textContent = solo ? 'Practice again' : me && me.ready ? 'Cancel ready' : 'Play again';
+    $('againBtn').disabled = opGone;
+    $('resMsg').textContent = solo ? `${PICK} differences per level, ${LV * PICK} in total.` : opGone ? 'Your opponent left. Stay in the room to wait for a new opponent.' : (S.players[1 - myIdx] && S.players[1 - myIdx].ready ? 'Your opponent wants a rematch!' : 'A new match starts when both players tap “Play again”.');
+  }
+
+  // ================= 點擊與動畫 =================
+  function svgPoint(svg, e) { const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY; return pt.matrixTransform(svg.getScreenCTM().inverse()); }
+  ['picA', 'picB'].forEach(id => $(id).addEventListener('pointerdown', e => {
+    if (tvMode || !S || S.phase !== 'play' || myIdx < 0) return;
+    const svg = $(id).querySelector('svg'); if (!svg) return;
+    e.preventDefault();
+    if (performance.now() < myLockUntil) return;
+    const p = svgPoint(svg, e);
+    if (p.x < 0 || p.y < 0 || p.x > 400 || p.y > 300) return;
+    if (isHost) judge(0, S.lv, p.x, p.y);
+    else { send({ t: 'tap', lv: S.lv, x: Math.round(p.x), y: Math.round(p.y) }); fx(p.x, p.y, 'tap', 1); }
+  }));
+
+  function fx(x, y, kind, who) {
+    svgs().forEach(s => {
+      const g = s.querySelector('.fx'); if (!g) return;
+      let html;
+      if (kind === 'ok') html = `<circle class="pulse" cx="${x}" cy="${y}" r="22" fill="none" style="stroke:${COLS[who]}" stroke-width="6"/>`;
+      else if (kind === 'tap') html = `<circle class="pulse" cx="${x}" cy="${y}" r="10" fill="none" stroke="#1d1a16" stroke-width="2" opacity=".5"/>`;
+      else html = `<g class="xm"><path d="M${x - 11},${y - 11} L${x + 11},${y + 11} M${x + 11},${y - 11} L${x - 11},${y + 11}" stroke="#fff" stroke-width="9" stroke-linecap="round"/><path d="M${x - 11},${y - 11} L${x + 11},${y + 11} M${x + 11},${y - 11} L${x - 11},${y + 11}" style="stroke:${COLS[who]}" stroke-width="5" stroke-linecap="round"/></g>`;
+      g.insertAdjacentHTML('beforeend', html);
+      const el = g.lastElementChild; setTimeout(() => el.remove(), 1200);
+    });
+  }
+
+  function onEv(m) {
+    if (!S || m.lv !== S.lv || (m.who !== 0 && m.who !== 1)) return;
+    const x = +m.x, y = +m.y;
+    if (m.ok) { fx(x, y, 'ok', m.who); sndOk(); }
+    else {
+      fx(x, y, 'miss', m.who); sndMiss();
+      if (m.who === myIdx) {
+        myLockUntil = performance.now() + LOCK_MS;
+        const st = $('stage'); st.classList.remove('shake'); void st.offsetWidth; st.classList.add('shake');
+        try { navigator.vibrate?.(120); } catch {}
+      }
+    }
+  }
+
+  // 每一格畫面更新：計時、倒數、凍結提示
+  function tick() {
+    requestAnimationFrame(tick);
+    if (!S || screen !== 'game') return;
+    const now = performance.now(), left = Math.max(0, deadline - now);
+    const tm = $('tm');
+    if (S.phase === 'play') { const s = Math.ceil(left / 1000); tm.textContent = s; tm.classList.toggle('low', s <= 10); }
+    else if (S.phase === 'between') { tm.textContent = '✓'; tm.classList.remove('low'); }
+    else { tm.textContent = S.phase === 'count' ? '…' : '--'; tm.classList.remove('low'); }
+    const n = $('ovNum'); if (n && S.phase === 'count') n.textContent = Math.max(1, Math.ceil(left / 1000));
+    const locked = S.phase === 'play' && now < myLockUntil;
+    $('lockov').hidden = !locked;
+    if (locked) $('lockTxt').textContent = `Miss! Frozen ${((myLockUntil - now) / 1000).toFixed(1)} s`;
+  }
+  requestAnimationFrame(tick);
+
+  // ================= 電視觀戰 =================
+  function enterTV(code) {
+    document.body.classList.add('tv');
+    $('tvUrl').textContent = location.host + location.pathname.replace(/index\.html$/, '');
+    $('tvCode').textContent = code;
+    try { navigator.wakeLock?.request('screen').catch(() => {}); } catch {}
+    show('game');
+  }
+
+  // 方便測試：網址加 #preview=關卡號 可直接看某關的兩張圖與差異位置
+  const pv = /#preview=(\d+)/.exec(location.hash);
+  if (pv) {
+    const lv = Math.max(1, Math.min(LV, +pv[1])) - 1;
+    S = { phase: 'between', rid: 'pv', seed: 1, lv, found: [], scores: [0, 0], miss: [0, 0], hist: [], timeout: true, left: 9e9, solo: true, players: [blankP('Preview')] };
+    show('game'); renderGame(); picSel = SCENES[lv].diffs.map((_, i) => i);
+    $('picB').innerHTML = `<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">${SCENES[lv].draw(() => true)}<g class="marks"></g><g class="fx"></g></svg>`;
+    SCENES[lv].diffs.forEach(d => addMark(d, -1));
+  }
+
+  $('nick').value = store('md-nick') || '';
+})();
+</script>
+</body>
+</html>
