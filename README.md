@@ -2,6 +2,8 @@
 
 A two-player, head-to-head spot-the-difference race for team lunches. Cast it to a TV so everyone can watch.
 
+**Play:** https://tengfanfan1031.github.io/meme-spot-duel--mini-game/
+
 ## How it works
 
 - 10 levels, each with a pair of meme pictures and 5 differences, from easy to hard (levels 1–2 are a warm-up, 9–10 are insane).
