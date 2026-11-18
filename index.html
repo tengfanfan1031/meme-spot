@@ -1,656 +1,286 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-Hant">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Meme Spot Duel</title>
+<meta name="theme-color" content="#0f1420">
+<title>找不同大賽 Spot the Difference</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Inter:wght@500;700;900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Noto+Sans+TC:wght@500;700;900&display=swap">
 <style>
-/* 版面概念：貼紙感的粗黑框＋錯位陰影，像迷因截圖貼在桌上；藍色是玩家一、桃紅是玩家二 */
+/* 版面概念：深色遊戲節目風格；琥珀色是主色，綠色代表找到，紅色代表點錯 */
 :root {
-  --bg: #fff6e6; --panel: #fffdf8; --ink: #1d1a16; --muted: #6f675c; --line: #1d1a16; --sh: #1d1a16;
-  --p1: #2f6bff; --p2: #ff2e6e; --ok: #14a35a; --bad: #e5372f; --hl: #ffd43b;
-  --font-d: "Bungee", "Inter", system-ui, sans-serif;
-  --font-b: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --bg: #0f1420; --panel: #171e2e; --panel2: #1f2840; --ink: #eef2f8; --muted: #8e9ab0; --line: #2a3449;
+  --acc: #ffb547; --acc-ink: #1a1405; --ok: #3ddc97; --bad: #ff5d5d; --me: #5aa9ff;
+  --font: "Inter", "Noto Sans TC", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: dark;
 }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --bg: #191713; --panel: #25221d; --ink: #f6efe2; --muted: #b3a996; --line: #f6efe2; --sh: #000;
-  --p1: #6f98ff; --p2: #ff6b98; --ok: #42d17f; --bad: #ff6a5f; color-scheme: dark } }
-:root[data-theme="dark"] {
-  --bg: #191713; --panel: #25221d; --ink: #f6efe2; --muted: #b3a996; --line: #f6efe2; --sh: #000;
-  --p1: #6f98ff; --p2: #ff6b98; --ok: #42d17f; --bad: #ff6a5f; color-scheme: dark }
-
 [hidden] { display: none !important; }
+* { box-sizing: border-box; }
 html, body { height: 100%; }
-body {
-  margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-b); font-size: 15px;
-  padding: 14px max(16px, env(safe-area-inset-right, 0px)) 24px max(16px, env(safe-area-inset-left, 0px));
-  -webkit-tap-highlight-color: transparent;
-}
-.wrap { max-width: 540px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-h1 { margin: 0; font-weight: 900; font-size: 28px; line-height: 1.1; }
-h1 small { display: block; font-family: var(--font-d); font-weight: 400; font-size: 12px; letter-spacing: .14em; color: var(--muted); }
-.conn { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
-.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
-.dot.on { background: var(--ok); }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 15px; -webkit-tap-highlight-color: transparent; }
+.en { color: var(--muted); font-weight: 500; font-size: .86em; margin-left: .35em; }
+button .en, .on-acc .en { color: inherit; opacity: .75; }
+.blk .en { display: block; margin: .15em 0 0; }
 
-.card { background: var(--panel); border: 3px solid var(--line); border-radius: 16px; box-shadow: 5px 5px 0 var(--sh); padding: 18px; display: flex; flex-direction: column; gap: 14px; }
-.card h2 { margin: 0; font-size: 19px; font-weight: 900; }
-.hint { color: var(--muted); font-size: 13px; line-height: 1.65; margin: 0; }
-label { font-size: 12px; color: var(--muted); font-weight: 700; display: block; margin-bottom: 6px; }
-input[type=text] { width: 100%; box-sizing: border-box; font: inherit; font-size: 16px; padding: 10px 12px; border: 2px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--ink); }
-input#code { font-family: var(--font-d); letter-spacing: .25em; text-transform: uppercase; }
-.row { display: flex; gap: 8px; flex-wrap: wrap; }
-.row > * { flex: 1 1 auto; }
-button { font: inherit; font-weight: 900; font-size: 15px; padding: 11px 16px; border-radius: 12px; cursor: pointer; border: 2.5px solid var(--line); background: var(--hl); color: #1d1a16; box-shadow: 3px 3px 0 var(--sh); }
-button:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--sh); }
-button.ghost { background: var(--panel); color: var(--ink); }
+/* ---------- 手機 ---------- */
+.phone { max-width: 560px; margin: 0 auto; padding: 14px max(16px, env(safe-area-inset-right)) 28px max(16px, env(safe-area-inset-left)); display: flex; flex-direction: column; gap: 14px; }
+.brand h1 { margin: 6px 0 0; font-size: 30px; font-weight: 900; letter-spacing: .02em; }
+.brand h1 small { display: block; font-family: Inter, sans-serif; font-size: 12px; font-weight: 800; letter-spacing: .28em; color: var(--acc); margin-top: 2px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 12px; }
+.card h2 { margin: 0; font-size: 18px; }
+.hint { color: var(--muted); font-size: 13px; line-height: 1.6; margin: 0; }
+label { font-size: 12px; font-weight: 700; color: var(--muted); display: block; margin-bottom: -6px; }
+input[type=text] { width: 100%; font: inherit; font-size: 17px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+input#code { font-family: Inter, sans-serif; font-weight: 800; letter-spacing: .3em; text-transform: uppercase; }
+button { font: inherit; font-weight: 700; font-size: 16px; padding: 13px 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel2); color: var(--ink); cursor: pointer; }
+button.primary { background: var(--acc); color: var(--acc-ink); border-color: var(--acc); }
 button:disabled { opacity: .45; cursor: not-allowed; }
-button:focus-visible, input:focus-visible { outline: 3px solid var(--p1); outline-offset: 2px; }
+button:active { transform: translateY(1px); }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--me); outline-offset: 2px; }
+.msg { min-height: 1.2em; font-size: 13px; color: var(--acc); margin: 0; line-height: 1.5; }
+details { color: var(--muted); font-size: 12px; line-height: 1.6; }
+details summary { cursor: pointer; }
+details a { color: var(--muted); }
+.big-wait { text-align: center; padding: 34px 18px; }
+.big-wait .nm { font-size: 30px; font-weight: 900; margin: 6px 0 14px; }
+.spinner { width: 34px; height: 34px; border-radius: 50%; border: 4px solid var(--line); border-top-color: var(--acc); margin: 8px auto; animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 
-.codebig { font-family: var(--font-d); font-size: 36px; letter-spacing: .25em; }
-.plist { display: flex; flex-direction: column; gap: 10px; }
-.pl { display: grid; grid-template-columns: 14px 1fr auto; align-items: center; gap: 10px; }
-.pl .sw { width: 14px; height: 14px; border-radius: 4px; border: 2px solid var(--line); }
-.pl .nm { font-weight: 900; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.pl .nm em { font-style: normal; font-weight: 500; color: var(--muted); font-size: 12px; margin-left: 6px; }
-.pill { font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 99px; border: 2px solid var(--line); white-space: nowrap; }
-.pill.ready { background: var(--ok); color: #fff; border-color: var(--ok); }
-.legend { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; font-size: 11px; color: var(--muted); text-align: center; }
-.legend div { padding: 6px 0; border-radius: 8px; background: var(--bg); border: 1.5px solid color-mix(in oklab, var(--line) 25%, transparent); line-height: 1.4; }
-.memes { display: flex; flex-wrap: wrap; gap: 6px; }
-.memes span { font-size: 12px; padding: 3px 9px; border-radius: 99px; background: var(--bg); border: 1.5px solid color-mix(in oklab, var(--line) 30%, transparent); }
-
-/* ---------- 遊戲畫面 ---------- */
-#game { display: flex; flex-direction: column; gap: 8px; }
-.sb { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; }
-.pc { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 6px 10px; border-radius: 12px; border: 2.5px solid var(--line); background: var(--panel); box-shadow: 3px 3px 0 var(--sh); }
-.pc.r { justify-content: flex-end; }
-.pc .nm { font-weight: 900; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }
-.pc .sc { font-family: var(--font-d); font-size: 26px; line-height: 1; font-variant-numeric: tabular-nums; }
-.pc.p0 { border-color: var(--p1); } .pc.p0 .sc { color: var(--p1); }
-.pc.p1 { border-color: var(--p2); } .pc.p1 .sc { color: var(--p2); }
-.pc.me { background: color-mix(in oklab, var(--hl) 35%, var(--panel)); }
-.mid { text-align: center; }
-.lvl { font-size: 12px; font-weight: 900; color: var(--muted); white-space: nowrap; }
-.tm { font-family: var(--font-d); font-size: 28px; line-height: 1; font-variant-numeric: tabular-nums; }
+/* 遊戲頂欄 */
+.hud { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: end; }
+.hud .lv { font-size: 13px; color: var(--muted); font-weight: 700; }
+.hud .lvn { font-size: 18px; font-weight: 900; }
+.hud .tm { font-family: Inter, sans-serif; font-weight: 800; font-size: 34px; line-height: 1; font-variant-numeric: tabular-nums; text-align: right; }
 .tm.low { color: var(--bad); }
-.info { display: flex; justify-content: space-between; align-items: center; gap: 10px; min-height: 26px; }
-.info .nmz { font-weight: 900; font-size: 15px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dots { display: flex; gap: 5px; flex: 0 0 auto; }
-.dots i { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--line); background: transparent; }
-.banner { text-align: center; font-weight: 900; font-size: 16px; padding: 8px 10px; border-radius: 12px; background: var(--hl); color: #1d1a16; border: 2.5px solid var(--line); }
-.banner small { display: block; font-weight: 500; font-size: 12px; }
-
+.dots { display: flex; gap: 6px; }
+.dots i { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--muted); }
+.dots i.on { background: var(--ok); border-color: var(--ok); }
+.dots i.miss { border-color: var(--acc); border-style: dashed; }
 .stage { position: relative; }
 .pics { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-.pic { margin: 0; position: relative; width: 100%; max-width: calc((100svh - 200px) / 2 * 4 / 3); }
-.pic figcaption { position: absolute; z-index: 2; left: 8px; top: 8px; font-size: 11px; font-weight: 900; padding: 2px 8px; border-radius: 99px; background: #1d1a16; color: #fff; pointer-events: none; }
-.svgbox { aspect-ratio: 4 / 3; border: 3px solid var(--line); border-radius: 12px; overflow: hidden; background: #fff; box-shadow: 4px 4px 0 var(--sh); touch-action: manipulation; user-select: none; -webkit-user-select: none; cursor: crosshair; }
+.pic { position: relative; margin: 0; width: 100%; max-width: calc((100svh - 190px) / 2 * 4 / 3); }
+.pic figcaption { position: absolute; z-index: 2; left: 8px; top: 8px; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 99px; background: rgba(0,0,0,.6); color: #fff; pointer-events: none; }
+.svgbox { aspect-ratio: 4 / 3; border-radius: 12px; overflow: hidden; background: #000; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
 .svgbox svg { display: block; width: 100%; height: 100%; }
 @media (min-width: 720px) and (min-aspect-ratio: 1/1) {
-  .wrap.wide { max-width: 1280px; }
+  .phone.wide { max-width: 1280px; }
   .pics { flex-direction: row; justify-content: center; }
-  .pic { flex: 1 1 0; max-width: calc((100vh - 190px) * 4 / 3); }
+  .pic { flex: 1 1 0; max-width: calc((100vh - 170px) * 4 / 3); }
 }
 .stage.shake .pics { animation: shake .3s; }
 @keyframes shake { 25% { transform: translateX(-7px) } 75% { transform: translateX(7px) } }
-.ov { position: absolute; inset: -4px; z-index: 5; border-radius: 16px; display: grid; place-items: center; text-align: center; background: var(--bg); border: 3px solid var(--line); }
-.ov .big { font-family: var(--font-d); font-size: clamp(90px, 22vw, 360px); line-height: 1; }
-.ov .sub { font-weight: 900; font-size: clamp(16px, 2.2vw, 40px); }
+.ov { position: absolute; inset: 0; z-index: 5; border-radius: 12px; display: grid; place-items: center; text-align: center; background: rgba(15,20,32,.92); padding: 16px; }
+.ov .num { font-family: Inter, sans-serif; font-weight: 800; font-size: clamp(90px, 26vw, 220px); line-height: 1; color: var(--acc); }
+.ov .t { font-size: 20px; font-weight: 900; }
 .lockov { position: absolute; inset: 0; z-index: 4; display: grid; place-items: center; pointer-events: none; }
-.lockov span { font-weight: 900; font-size: 20px; padding: 10px 18px; border-radius: 14px; background: var(--bad); color: #fff; border: 3px solid #1d1a16; box-shadow: 4px 4px 0 #1d1a16; }
-.foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-.foot button { padding: 7px 12px; font-size: 13px; }
+.lockov span { font-weight: 800; font-size: 18px; padding: 12px 18px; border-radius: 14px; background: var(--bad); color: #fff; text-align: center; }
+.banner { border-radius: 14px; padding: 12px 14px; background: var(--panel2); border: 1px solid var(--line); font-weight: 800; text-align: center; line-height: 1.45; }
+.banner.done { background: color-mix(in oklab, var(--ok) 22%, var(--panel)); border-color: var(--ok); }
+.banner .sub { display: block; font-size: 13px; font-weight: 600; color: var(--muted); }
+.statrow { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.stat { background: var(--panel2); border-radius: 12px; padding: 12px; text-align: center; }
+.stat b { display: block; font-family: Inter, sans-serif; font-size: 28px; font-weight: 800; color: var(--acc); }
+.stat span { font-size: 12px; color: var(--muted); }
+.conn-bad { background: var(--bad); color: #fff; border-radius: 10px; padding: 8px 12px; font-size: 13px; font-weight: 700; text-align: center; }
 
-/* SVG 標記動畫 */
-.mk { animation: popin .35s ease-out; transform-box: fill-box; transform-origin: center; }
-@keyframes popin { from { transform: scale(1.8); opacity: 0 } to { transform: scale(1); opacity: 1 } }
-.rv { animation: blink 1s ease-in-out infinite; }
-@keyframes blink { 50% { opacity: .35 } }
-.pulse { animation: pulse .7s ease-out forwards; transform-box: fill-box; transform-origin: center; }
+/* SVG 標記 */
+.mk { animation: popin .3s ease-out; transform-box: fill-box; transform-origin: center; }
+@keyframes popin { from { transform: scale(1.7); opacity: 0 } to { transform: scale(1); opacity: 1 } }
+.rv { animation: blink 1.1s ease-in-out infinite; }
+@keyframes blink { 50% { opacity: .4 } }
+.pulse { animation: pulse .6s ease-out forwards; transform-box: fill-box; transform-origin: center; }
 @keyframes pulse { from { opacity: .9; transform: scale(.3) } to { opacity: 0; transform: scale(1.6) } }
-.xm { animation: xfade 1.1s forwards; }
+.xm { animation: xfade 1s forwards; }
 @keyframes xfade { 0%, 70% { opacity: 1 } 100% { opacity: 0 } }
+@media (prefers-reduced-motion: reduce) { .mk, .rv, .pulse, .stage.shake .pics, .spinner { animation: none; } }
 
-/* 結果 */
-.rank { display: grid; grid-template-columns: 34px 1fr auto; gap: 8px; align-items: center; padding: 10px 0; border-bottom: 2px dashed color-mix(in oklab, var(--line) 25%, transparent); }
-.rank:last-child { border-bottom: 0; }
-.rank b { font-family: var(--font-d); font-size: 22px; }
-.rank .t { font-family: var(--font-d); font-size: 22px; }
-table.hist { width: 100%; border-collapse: collapse; font-size: 13px; }
-table.hist th, table.hist td { padding: 5px 4px; text-align: center; border-bottom: 1px solid color-mix(in oklab, var(--line) 18%, transparent); }
-table.hist th:first-child, table.hist td:first-child { text-align: left; }
-table.hist td.w { font-weight: 900; }
-@media (prefers-reduced-motion: reduce) { .stage.shake .pics, .mk, .pulse, .rv { animation: none; } }
+/* 排名列 */
+.rk { display: grid; grid-template-columns: 2.2em 1fr auto; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.rk:last-child { border-bottom: 0; }
+.rk b { font-family: Inter, sans-serif; font-weight: 800; color: var(--muted); }
+.rk .n { font-weight: 700; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rk .s { font-family: Inter, sans-serif; font-weight: 800; font-variant-numeric: tabular-nums; }
+.rk.me { color: var(--me); }
+.rk.top1 b { color: #ffd166; } .rk.top2 b { color: #cfd8e3; } .rk.top3 b { color: #e0a070; }
 
-/* ---------- 電視觀戰：大字、雙圖並排、不可點 ---------- */
-#tvHead { display: none; }
-body.tv { padding: 2vh 2.5vw; overflow: hidden; }
-body.tv header, body.tv .foot, body.tv #gameHint { display: none; }
-body.tv .wrap { max-width: 1800px; gap: 1.6vh; }
-body.tv #tvHead { display: flex; justify-content: space-between; align-items: center; gap: 12px 24px; flex-wrap: wrap; }
-.tvt { margin: 0; font-weight: 900; font-size: clamp(24px, 2.8vw, 56px); line-height: 1; }
-.tvt small { font-family: var(--font-d); font-weight: 400; font-size: .4em; letter-spacing: .14em; color: var(--muted); margin-left: .5em; }
-.tvj { font-size: clamp(14px, 1.4vw, 26px); color: var(--muted); display: flex; align-items: baseline; gap: .5em; flex-wrap: wrap; }
-.tvj b { font-family: var(--font-d); color: var(--ink); letter-spacing: .18em; font-size: 1.5em; font-weight: 400; }
-.tvj .url { color: var(--ink); font-weight: 900; }
-body.tv .pc { padding: .8vh 1.2vw; border-width: 4px; }
-body.tv .pc .nm { font-size: clamp(18px, 2.2vw, 44px); }
-body.tv .pc .sc { font-size: clamp(30px, 3.8vw, 76px); }
-body.tv .lvl { font-size: clamp(14px, 1.4vw, 28px); }
-body.tv .tm { font-size: clamp(30px, 3.6vw, 72px); }
-body.tv .info .nmz { font-size: clamp(16px, 1.8vw, 36px); }
-body.tv .dots i { width: clamp(14px, 1.6vw, 32px); height: clamp(14px, 1.6vw, 32px); border-width: 3px; }
-body.tv .banner { font-size: clamp(18px, 2.2vw, 44px); }
-body.tv .banner small { font-size: .5em; }
-body.tv .pics { flex-direction: row; justify-content: center; gap: 2vw; }
-body.tv .pic { flex: 1 1 0; max-width: calc((100vh - 30vh) * 4 / 3); }
-body.tv .pic figcaption { font-size: clamp(12px, 1.2vw, 22px); }
-body.tv .svgbox { cursor: default; border-width: 4px; }
-body.tv .ov { min-height: 50vh; }
-.tvov h3 { margin: 0 0 1vh; font-size: clamp(28px, 4vw, 80px); font-weight: 900; }
-.tvov p { margin: .6vh 0; font-size: clamp(16px, 1.8vw, 36px); color: var(--muted); }
-.tvov .who { display: flex; gap: 3vw; justify-content: center; margin-top: 2vh; font-size: clamp(18px, 2.4vw, 48px); font-weight: 900; }
-.tvov .who span { padding: .4em .9em; border-radius: 16px; border: 4px solid currentColor; }
+/* ---------- 電視（主持） ---------- */
+#tv { position: fixed; inset: 0; display: flex; flex-direction: column; padding: 2.2vh 2.4vw; gap: 2vh; font-size: clamp(14px, 1.15vw, 26px); overflow: hidden; }
+.tv-top { display: flex; align-items: center; justify-content: space-between; gap: 2vw; }
+.tv-title { font-weight: 900; font-size: 2.1em; line-height: 1; }
+.tv-title small { font-family: Inter, sans-serif; font-size: .38em; letter-spacing: .3em; color: var(--acc); display: block; margin-top: .3em; }
+.tv-join { display: flex; align-items: center; gap: 1.2vw; color: var(--muted); font-size: 1em; text-align: right; }
+.tv-join b { color: var(--ink); font-family: Inter, sans-serif; font-weight: 800; letter-spacing: .2em; font-size: 1.6em; }
+.tv-mini-qr { background: #fff; padding: 4px; border-radius: 6px; line-height: 0; }
+.tv-mini-qr img, .tv-mini-qr canvas { width: 7vh !important; height: 7vh !important; }
+.tv-main { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 24vw; gap: 1.6vw; }
+.tv-left { min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 1.6vh; }
+.tv-right { min-width: 0; min-height: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 2vh 1.4vw; display: flex; flex-direction: column; gap: 1.2vh; overflow: hidden; }
+.tv-right h3 { margin: 0; font-size: 1.1em; }
+.tv-head { display: flex; align-items: baseline; justify-content: space-between; gap: 2vw; }
+.tv-head .lvn { font-weight: 900; font-size: 1.7em; }
+.tv-head .lvn small { font-size: .55em; color: var(--muted); font-weight: 700; margin-right: .6em; }
+.tv-head .tm { font-family: Inter, sans-serif; font-weight: 800; font-size: 3em; line-height: 1; font-variant-numeric: tabular-nums; }
+.tv-pics { flex: 1; min-height: 0; display: flex; gap: 1.4vw; align-items: center; justify-content: center; }
+.tv-pics .pic { flex: 1 1 0; max-width: calc((100vh - 26vh) * 4 / 3); }
+.tv-pics .pic figcaption { font-size: .8em; }
+.tv-sub { color: var(--muted); font-size: .95em; display: flex; justify-content: space-between; gap: 2vw; }
+.tv-sub b { color: var(--ink); }
+.lb { display: flex; flex-direction: column; gap: .55vh; }
+.lb .row { display: grid; grid-template-columns: 1.9em 1fr auto; gap: .6vw; align-items: center; padding: .45vh .6vw; border-radius: 10px; background: var(--panel2); }
+.lb .row.done { background: color-mix(in oklab, var(--ok) 20%, var(--panel2)); }
+.lb .row b { font-family: Inter, sans-serif; font-weight: 800; color: var(--muted); }
+.lb .row .n { font-weight: 700; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lb .row .v { font-family: Inter, sans-serif; font-weight: 800; font-variant-numeric: tabular-nums; }
+.lb .dots i { width: .8em; height: .8em; border-width: 2px; }
+.lb .more { color: var(--muted); font-size: .85em; text-align: center; }
+.fast { display: flex; flex-direction: column; gap: .4vh; }
+.fast .f { display: flex; justify-content: space-between; gap: 1vw; font-weight: 700; }
+.fast .f span:last-child { font-family: Inter, sans-serif; color: var(--ok); }
+.tv-lobby { flex: 1; display: grid; grid-template-columns: auto 1fr; gap: 3vw; align-items: center; min-height: 0; }
+.qrbox { background: #fff; padding: 2vh; border-radius: 20px; line-height: 0; justify-self: center; }
+.qrbox img, .qrbox canvas { width: 40vh !important; height: 40vh !important; }
+.lobby-info { display: flex; flex-direction: column; gap: 2vh; min-width: 0; min-height: 0; }
+.lobby-info .step { font-size: 1.5em; font-weight: 800; line-height: 1.4; }
+.lobby-info .url { font-family: Inter, sans-serif; font-weight: 800; color: var(--acc); font-size: 1.3em; word-break: break-all; }
+.lobby-info .code { font-family: Inter, sans-serif; font-weight: 800; letter-spacing: .25em; font-size: 4.2em; line-height: 1; }
+.chips { display: flex; flex-wrap: wrap; gap: .6vw; max-height: 26vh; overflow: hidden; align-content: flex-start; }
+.chips span { background: var(--panel2); border: 1px solid var(--line); border-radius: 99px; padding: .35em .9em; font-weight: 700; animation: popin .3s; }
+.chips span.off { opacity: .4; }
+.tv-btns { display: flex; gap: 1vw; flex-wrap: wrap; }
+.tv-btns button { font-size: 1.1em; padding: .7em 1.4em; }
+.tv-count { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; background: rgba(15,20,32,.94); z-index: 10; }
+.tv-count .num { font-family: Inter, sans-serif; font-weight: 800; font-size: 30vh; line-height: 1; color: var(--acc); }
+.tv-count .t { font-size: 2.4em; font-weight: 900; }
+.podium { display: grid; grid-template-columns: 1fr 1.15fr 1fr; gap: 2vw; align-items: end; }
+.podium .p { text-align: center; background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 2vh 1vw; }
+.podium .p .medal { font-size: 3em; line-height: 1; }
+.podium .p .n { font-weight: 900; font-size: 1.6em; margin: .4em 0 .2em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.podium .p .s { font-family: Inter, sans-serif; font-weight: 800; font-size: 1.4em; color: var(--acc); }
+.podium .p.first { padding: 4vh 1vw; border-color: #ffd166; }
+.credit { color: var(--muted); font-size: .7em; }
 </style>
 </head>
 <body>
 
-<div class="wrap" id="wrap">
-  <header>
-    <h1>Meme Spot Duel<small>FIND THE 5 DIFFERENCES</small></h1>
-    <div class="conn"><span class="dot" id="dot"></span><span id="connTxt">Offline</span></div>
-  </header>
-
-  <!-- 電視頂部 -->
-  <div id="tvHead">
-    <h2 class="tvt">Meme Spot Duel<small>FIND THE 5 DIFFERENCES</small></h2>
-    <div class="tvj">Play at <span class="url" id="tvUrl"></span> · Room <b id="tvCode"></b></div>
+<!-- ===== 手機：加入 ===== -->
+<section id="join" class="phone">
+  <header class="brand"><h1>找不同大賽<small>SPOT THE DIFFERENCE</small></h1></header>
+  <div class="card">
+    <h2>加入遊戲<span class="en">Join the game</span></h2>
+    <label for="nick">你的名字<span class="en">Your name</span></label>
+    <input type="text" id="nick" maxlength="12" autocomplete="off" placeholder="例如 e.g. Alex">
+    <label for="code">房號（看電視）<span class="en">Room code (on the TV)</span></label>
+    <input type="text" id="code" maxlength="6" autocomplete="off" placeholder="ABCD">
+    <button id="joinBtn" class="primary">加入<span class="en">Join</span></button>
+    <p class="msg" id="joinMsg"></p>
+    <button id="soloBtn">自己練習<span class="en">Practice solo</span></button>
   </div>
+  <div class="card">
+    <h2>主持人<span class="en">Host</span></h2>
+    <p class="hint">在接電視的電腦打開這頁，按「電視主持」。電視會顯示 QR code，同事用手機掃描就可以加入，最多約 60 人。<br><span class="en" style="margin:0">Open this page on the computer connected to the TV and press “Host on TV”. Colleagues scan the QR code to join (up to about 60 people).</span></p>
+    <button id="hostBtn">電視主持<span class="en">Host on TV</span></button>
+  </div>
+  <div class="card">
+    <h2>玩法<span class="en">How to play</span></h2>
+    <p class="hint">8 關真實相片，每關兩張圖有 3 個不同，全場約 5 分鐘。大家同時玩同一關，越快找齊越高分。點錯會凍結 3 秒。<br><span class="en" style="margin:0">8 rounds of real photos, 3 differences each, about 5 minutes in total. Everyone plays the same round at the same time. Find all 5 faster to score more. A wrong tap freezes you for 3 seconds.</span></p>
+    <details><summary>相片來源 Photo credits</summary><div id="credits"></div></details>
+  </div>
+</section>
 
-  <!-- 大廳 -->
-  <section id="lobby" class="card">
-    <h2>Two players · 15 levels · 5 differences each</h2>
-    <p class="hint">You both see the same pair of pictures. Whoever taps a difference first gets the point. Tap either picture. A wrong tap freezes you for 3 seconds. 15 levels from easy to hard. Highest total score wins.</p>
-    <div class="memes" aria-label="Memes">
-      <span>Doge</span><span>Moo Deng</span><span>This is fine</span><span>Capybara Spa</span><span>Chill Guy</span><span>Woman Yelling at Cat</span><span>Two Buttons</span><span>Distracted BF</span><span>Stonks</span><span>Vibing DJ Cat</span><span>Could Have Been an Email</span><span>Reply All</span><span>Microwave Queue</span><span>Printer Jam</span><span>Is It Friday Yet?</span>
-    </div>
-    <div>
-      <label for="nick">Your name</label>
-      <input type="text" id="nick" maxlength="10" placeholder="e.g. Alex" autocomplete="off">
-    </div>
-    <div class="row">
-      <button id="hostBtn">Create room</button>
-      <button id="soloBtn" class="ghost">Practice solo</button>
-    </div>
-    <div>
-      <label for="code">Or enter a room code</label>
-      <div class="row">
-        <input type="text" id="code" maxlength="6" autocomplete="off" placeholder="e.g. K7QH" style="flex:1 1 120px">
-        <button id="joinBtn" class="ghost" style="flex:0 0 auto">Join</button>
-        <button id="tvBtn" class="ghost" style="flex:0 0 auto">Watch on TV</button>
-      </div>
-    </div>
-    <p class="hint" id="lobbyMsg">One player taps “Create room” and shares the code. The other enters it and taps “Join”. To show the match on a big screen, open this page on the TV computer, enter the same code and tap “Watch on TV”.</p>
-    <div class="legend" aria-label="Difficulty">
-      <div>Lv 1–3<br>Warm-up</div><div>Lv 4–6<br>Easy</div><div>Lv 7–9<br>Medium</div><div>Lv 10–12<br>Hard</div><div>Lv 13–15<br>Insane</div>
-    </div>
-  </section>
+<!-- ===== 手機：等待 ===== -->
+<section id="wait" class="phone" hidden>
+  <header class="brand"><h1>找不同大賽<small>SPOT THE DIFFERENCE</small></h1></header>
+  <div class="card big-wait">
+    <div>已加入<span class="en">You're in</span></div>
+    <div class="nm" id="waitName"></div>
+    <div class="spinner"></div>
+    <p class="hint" id="waitTxt"></p>
+    <p class="hint" id="loadTxt"></p>
+  </div>
+  <div class="conn-bad" id="connBad1" hidden></div>
+  <button id="leaveBtn">離開<span class="en">Leave</span></button>
+</section>
 
-  <!-- 房間 -->
-  <section id="room" class="card" hidden>
-    <div class="row" style="align-items:center">
-      <div><label>Room code</label><div class="codebig" id="roomCode"></div></div>
-      <button id="leaveBtn" class="ghost" style="flex:0 0 auto">Leave</button>
+<!-- ===== 手機：遊戲 ===== -->
+<section id="game" class="phone" hidden>
+  <div class="conn-bad" id="connBad2" hidden></div>
+  <div class="hud">
+    <div><div class="lv" id="gLv"></div><div class="lvn" id="gName"></div></div>
+    <div class="tm" id="gTm">--</div>
+    <div class="dots" id="gDots"></div>
+    <div class="hint" id="gMiss" style="text-align:right"></div>
+  </div>
+  <div class="banner" id="gBanner" hidden></div>
+  <div class="stage" id="stage">
+    <div class="pics">
+      <figure class="pic"><figcaption>A</figcaption><div class="svgbox" id="picA"></div></figure>
+      <figure class="pic"><figcaption>B</figcaption><div class="svgbox" id="picB"></div></figure>
     </div>
-    <div class="plist" id="players"></div>
-    <p class="hint" id="roomMsg">Waiting for an opponent…</p>
-    <p class="hint" id="tvNote" hidden></p>
-    <button id="readyBtn">I’m ready</button>
-  </section>
+    <div class="lockov" id="lockov" hidden><span id="lockTxt"></span></div>
+    <div class="ov" id="gOv" hidden></div>
+  </div>
+  <p class="hint" id="gHint">兩張圖都可以點。<span class="en">Tap either picture.</span></p>
+</section>
 
-  <!-- 遊戲 -->
-  <section id="game" hidden>
-    <div class="sb">
-      <div class="pc p0" id="pc0"><span class="nm" id="n0"></span><b class="sc" id="s0" style="margin-left:auto">0</b></div>
-      <div class="mid"><div class="lvl" id="lvl"></div><div class="tm" id="tm">--</div></div>
-      <div class="pc p1 r" id="pc1"><b class="sc" id="s1" style="margin-right:auto">0</b><span class="nm" id="n1"></span></div>
-    </div>
-    <div class="info" id="info"><span class="nmz" id="lvName"></span><span class="dots" id="dots"></span></div>
-    <div class="banner" id="banner" hidden></div>
-    <div class="stage" id="stage">
-      <div class="pics">
-        <figure class="pic"><figcaption>ORIGINAL</figcaption><div class="svgbox" id="picA"></div></figure>
-        <figure class="pic"><figcaption>SPOT IT</figcaption><div class="svgbox" id="picB"></div></figure>
-      </div>
-      <div class="lockov" id="lockov" hidden><span id="lockTxt">Miss! Frozen 3 s</span></div>
-      <div class="ov" id="ov" hidden></div>
-    </div>
-    <div class="foot">
-      <p class="hint" id="gameHint">Tap either picture. A miss freezes you for 3 s.</p>
-      <button class="ghost" id="quitBtn">Leave</button>
-    </div>
-  </section>
+<!-- ===== 手機：完場 ===== -->
+<section id="final" class="phone" hidden>
+  <header class="brand"><h1>完場<small>FINAL RESULTS</small></h1></header>
+  <div class="card">
+    <div class="statrow"><div class="stat"><b id="fRank">-</b><span>名次 Rank</span></div><div class="stat"><b id="fScore">0</b><span>總分 Score</span></div></div>
+    <div id="fTop"></div>
+    <p class="hint" id="fMsg"></p>
+  </div>
+  <button id="soloAgain" class="primary" hidden>再練一次<span class="en">Practice again</span></button>
+  <button id="leave2Btn">離開<span class="en">Leave</span></button>
+</section>
 
-  <!-- 結果 -->
-  <section id="result" class="card" hidden>
-    <h2 id="resTitle">Finished!</h2>
-    <div id="resList"></div>
-    <table class="hist" id="hist"></table>
-    <p class="hint" id="resMsg"></p>
-    <div class="row"><button id="againBtn">Play again</button><button id="leave2Btn" class="ghost" style="flex:0 0 auto">Leave</button></div>
-  </section>
-</div>
+<!-- ===== 電視主持 ===== -->
+<section id="tv" hidden>
+  <div class="tv-top">
+    <div class="tv-title">找不同大賽<small>SPOT THE DIFFERENCE</small></div>
+    <div class="tv-join" id="tvJoinMini"></div>
+  </div>
+  <div id="tvBody" style="flex:1;min-height:0;display:flex;flex-direction:column;position:relative"></div>
+</section>
 
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
 (() => {
-  const LV = 15, PICK = 5, LOCK_MS = 3000, TOL = 6, PREFIX = 'memediff-tw-';
-  // 每關時限（秒）：越後面越難，給多一點時間
-  const TIME = [48, 48, 48, 56, 56, 60, 64, 72, 72, 72, 72, 75, 75, 80, 80];
+  // ================= 設定 =================
+  const LV = 8, PICK = 3, LOCK_MS = 3000, TOL = 6, PREFIX = 'spotduel-hk-', MAXP = 60;
+  const TIME = [20, 20, 22, 22, 25, 25, 28, 30];       // 每關秒數（全場約 5 分鐘）
+  const REVEAL_MS = 8000, SOLO_REVEAL_MS = 4000, COUNT_MS = 3000;
+  const NAMES = [['維港漁船', 'Harbour Junk'], ['彩色小屋', 'Burano Houses'], ['海灘遮陽傘', 'Beach Umbrellas'], ['手作杯', 'Handmade Cups'],
+    ['火水燈', 'Oil Lamps'], ['壽司盒', 'Sushi Box'], ['山頂夜景', 'The Peak at Dusk'], ['蘋果堆', 'Apple Pile']];
+  // 每關 6 個候選差異（遊戲座標 400×300）：x,y,r 是命中範圍；px,py,pw,ph 是差異圖層位置
+  const DIFFS = [[{"x":374.4,"y":184.0,"r":14.4,"px":361.25,"py":165.0,"pw":26.67,"ph":38.75},{"x":176.5,"y":198.1,"r":9.0,"px":166.67,"py":170.83,"pw":20.42,"ph":39.58},{"x":116.2,"y":129.8,"r":50.0,"px":25.0,"py":115.42,"pw":183.33,"ph":28.75},{"x":249.8,"y":165.0,"r":11.5,"px":235.83,"py":156.67,"pw":28.75,"ph":16.67},{"x":325.8,"y":184.2,"r":16.7,"px":310.42,"py":164.58,"pw":31.25,"ph":39.58},{"x":175.3,"y":35.0,"r":26.2,"px":170.42,"py":4.17,"pw":12.08,"ph":60.83}],[{"x":174.2,"y":155.0,"r":19.2,"px":160.0,"py":134.17,"pw":27.92,"ph":42.08},{"x":148.1,"y":235.6,"r":25.2,"px":135.83,"py":208.75,"pw":25.42,"ph":54.17},{"x":217.5,"y":154.2,"r":15.0,"px":202.92,"py":135.83,"pw":29.58,"ph":36.25},{"x":316.5,"y":37.4,"r":13.0,"px":304.58,"py":17.08,"pw":26.25,"ph":37.92},{"x":15.8,"y":181.9,"r":50.0,"px":0.0,"py":102.92,"pw":35.0,"ph":156.67},{"x":257.7,"y":127.1,"r":9.0,"px":247.08,"py":116.25,"pw":21.25,"ph":21.25}],[{"x":45.4,"y":110.4,"r":9.0,"px":34.17,"py":102.08,"pw":22.5,"ph":17.08},{"x":179.7,"y":229.0,"r":30.1,"px":147.08,"py":220.42,"pw":67.92,"ph":18.33},{"x":70.4,"y":256.7,"r":20.0,"px":54.17,"py":235.0,"pw":32.92,"ph":43.75},{"x":234.6,"y":161.5,"r":16.0,"px":225.83,"py":144.17,"pw":17.92,"ph":36.25},{"x":258.4,"y":49.4,"r":12.9,"px":243.33,"py":43.33,"pw":30.42,"ph":11.25},{"x":40.4,"y":196.9,"r":11.2,"px":25.0,"py":192.08,"pw":29.17,"ph":10.42}],[{"x":175.8,"y":157.3,"r":13.1,"px":162.08,"py":139.58,"pw":27.92,"ph":33.75},{"x":279.6,"y":121.7,"r":29.2,"px":246.67,"py":98.33,"pw":66.25,"ph":47.08},{"x":384.8,"y":27.1,"r":14.4,"px":367.92,"py":10.42,"pw":32.08,"ph":33.75},{"x":306.9,"y":30.8,"r":12.5,"px":297.92,"py":15.42,"pw":17.08,"ph":30.83},{"x":95.6,"y":199.8,"r":9.0,"px":86.25,"py":194.58,"pw":17.92,"ph":10.83},{"x":354.2,"y":240.2,"r":9.0,"px":341.25,"py":229.17,"pw":26.25,"ph":22.92}],[{"x":51.9,"y":203.1,"r":50.0,"px":16.67,"py":120.0,"pw":70.42,"ph":158.75},{"x":214.8,"y":169.2,"r":50.0,"px":181.25,"py":97.08,"pw":75.42,"ph":144.17},{"x":289.6,"y":159.4,"r":50.0,"px":262.92,"py":89.58,"pw":56.67,"ph":134.58},{"x":284.8,"y":28.5,"r":12.3,"px":267.08,"py":13.75,"pw":36.25,"ph":29.58},{"x":378.3,"y":168.3,"r":50.0,"px":355.0,"py":100.83,"pw":45.0,"ph":135.42},{"x":235.5,"y":121.0,"r":18.6,"px":214.58,"py":92.92,"pw":42.08,"ph":46.25}],[{"x":51.9,"y":205.0,"r":47.9,"px":6.67,"py":150.83,"pw":88.75,"ph":108.75},{"x":295.4,"y":156.2,"r":12.1,"px":280.0,"py":142.08,"pw":31.67,"ph":27.92},{"x":375.6,"y":141.2,"r":24.2,"px":350.83,"py":110.83,"pw":49.17,"ph":58.33},{"x":231.2,"y":84.0,"r":39.4,"px":192.5,"py":37.5,"pw":77.92,"ph":91.25},{"x":154.8,"y":176.9,"r":21.5,"px":129.17,"py":152.08,"pw":52.08,"ph":50.42},{"x":290.0,"y":91.0,"r":41.0,"px":253.75,"py":40.42,"pw":72.08,"ph":98.75}],[{"x":96.2,"y":20.0,"r":10.4,"px":88.33,"py":6.67,"pw":17.08,"ph":25.42},{"x":66.7,"y":117.3,"r":12.3,"px":54.58,"py":103.75,"pw":25.0,"ph":27.92},{"x":336.8,"y":87.9,"r":9.0,"px":330.0,"py":82.92,"pw":17.08,"ph":10.83},{"x":325.8,"y":34.0,"r":9.0,"px":314.17,"py":24.17,"pw":22.92,"ph":16.25},{"x":212.9,"y":125.6,"r":9.0,"px":205.83,"py":119.17,"pw":14.58,"ph":12.92},{"x":151.8,"y":129.6,"r":9.8,"px":140.0,"py":123.33,"pw":23.33,"ph":12.5}],[{"x":262.6,"y":61.2,"r":9.0,"px":255.0,"py":50.83,"pw":15.42,"ph":22.08},{"x":75.2,"y":75.4,"r":23.5,"px":47.08,"py":52.08,"pw":56.25,"ph":47.92},{"x":339.2,"y":92.7,"r":25.0,"px":309.17,"py":67.5,"pw":60.42,"ph":50.42},{"x":165.0,"y":137.1,"r":10.4,"px":152.5,"py":129.17,"pw":26.25,"ph":16.25},{"x":388.1,"y":194.4,"r":9.0,"px":379.17,"py":185.42,"pw":18.75,"ph":17.92},{"x":375.2,"y":31.2,"r":14.4,"px":357.92,"py":15.42,"pw":34.58,"ph":32.08}]];
+  const CREDITS = [["CEphoto, Uwe Aranas","CC BY-SA 3.0","https://commons.wikimedia.org/wiki/File:Hong_Kong_China_Junk-in-Victoria-Harbour-01.jpg"],["kallerna","CC BY-SA 4.0","https://commons.wikimedia.org/wiki/File:Burano_Venice_14.jpg"],["Ввласенко","CC BY-SA 3.0","https://commons.wikimedia.org/wiki/File:Golden_umbrellas._Stegna,_Rhodes,_Greece.jpg"],["Terragio67","CC BY-SA 4.0","https://commons.wikimedia.org/wiki/File:Porcelain_cup_set_-_Santarcangelo_di_Romagna.jpg"],["Satdeep Gill","CC BY-SA 4.0","https://commons.wikimedia.org/wiki/File:Lanterns_in_Rishikesh.jpg"],["Dllu","CC BY-SA 4.0","https://commons.wikimedia.org/wiki/File:Grocery_store_sushi_from_Pittsburgh_2.jpg"],["Estial","CC BY-SA 4.0","https://commons.wikimedia.org/wiki/File:Hong_Kong_Skyscrapers.jpg"],["Dietmar Rabich","CC BY-SA 4.0","https://commons.wikimedia.org/wiki/File:Melbourne_(AU),_Queen_Victoria_Market_--_2019_--_1545.jpg"]];
 
+  // ================= 小工具 =================
   const $ = id => document.getElementById(id);
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const bi = (zh, en) => `${zh}<span class="en">${en}</span>`;
+  const now = () => performance.now();
   function rng(seed) { let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
   const randCode = () => Array.from({ length: 4 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random() * 32)]).join('');
   function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch { return null; } }
-
-  // ================= 關卡圖（SVG，400×300） =================
-  // 每關定義 6 個候選差異，每局用 seed 抽 5 個；draw(h) 的 h(id) 為真時畫「改過」的版本
-  const K = '#2b2118';
-  const st = (w = 3) => `stroke="${K}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="round"`;
-  const COMIC = `font-family="'Comic Sans MS','Chalkboard SE','Comic Neue',cursive"`;
-  const BOLD = `font-family="Inter,'Arial Black',Arial,sans-serif" font-weight="900"`;
-  const rays = (cx, cy, r1, r2, n) => Array.from({ length: n }, (_, i) => { const a = i / n * Math.PI * 2; return `<line x1="${(cx + Math.cos(a) * r1).toFixed(1)}" y1="${(cy + Math.sin(a) * r1).toFixed(1)}" x2="${(cx + Math.cos(a) * r2).toFixed(1)}" y2="${(cy + Math.sin(a) * r2).toFixed(1)}" stroke="#f0a800" stroke-width="4" stroke-linecap="round"/>`; }).join('');
-  const flame = (x, y, s) => `<g transform="translate(${x} ${y}) scale(${s})"><path d="M0,0 C-24,0 -28,-24 -14,-40 C-12,-28 -5,-27 -3,-36 C-1,-52 9,-58 8,-70 C24,-56 30,-36 21,-18 C27,-22 29,-29 28,-34 C38,-16 24,0 0,0Z" fill="#ff5a1f" stroke="#c2361a" stroke-width="2"/><path d="M0,-2 C-12,-2 -14,-14 -7,-22 C-5,-16 -1,-16 0,-22 C2,-30 8,-33 7,-40 C15,-30 16,-18 11,-10 C14,-12 15,-15 14,-18 C20,-8 12,-2 0,-2Z" fill="#ffd23f"/></g>`;
-  const drop = (x, y) => `<path d="M${x},${y} q8,11 0,15 q-8,-4 0,-15Z" fill="#6ec3ff" ${st(1.5)}/>`;
-  const steam = (x, y) => `<path d="M${x},${y} q-10,-12 0,-24 q10,-12 0,-24" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".9"/>`;
-  const STARS = (() => { const r = rng(20261117); return Array.from({ length: 46 }, () => ({ x: r() * 400, y: r() * 300, s: .7 + r() * 1.5 })).filter(p => !(p.x > 100 && p.x < 300 && p.y > 110)); })();
-
-  const SCENES = [
-    { name: 'Doge', sub: 'wow such eyes',
-      diffs: [{ x: 72, y: 50, r: 36 }, { x: 162, y: 88, r: 22 }, { x: 200, y: 168, r: 20 }, { x: 350, y: 52, r: 40 }, { x: 325, y: 266, r: 32 }, { x: 166, y: 121, r: 16 }],
-      draw: h => `
-        <rect width="400" height="300" fill="#fff4c9"/><rect y="242" width="400" height="58" fill="#c9e7a3"/>
-        ${h(3) ? '' : `<g>${rays(350, 52, 32, 44, 10)}<circle cx="350" cy="52" r="24" fill="#ffcf3f" ${st()}/></g>`}
-        <ellipse cx="200" cy="248" rx="85" ry="45" fill="#e3a14a" ${st()}/>
-        <path d="M132,118 L148,48 L190,96 Z" fill="#e3a14a" ${st()}/><path d="M147,102 L152,68 L176,96 Z" fill="${h(1) ? '#5fb8e6' : '#f6b0a8'}"/>
-        <path d="M210,96 L252,48 L268,118 Z" fill="#e3a14a" ${st()}/><path d="M224,96 L248,68 L253,102 Z" fill="#f6b0a8"/>
-        <ellipse cx="200" cy="152" rx="80" ry="68" fill="#e3a14a" ${st()}/>
-        <ellipse cx="152" cy="174" rx="26" ry="20" fill="#fff3e0"/><ellipse cx="248" cy="174" rx="26" ry="20" fill="#fff3e0"/>
-        <ellipse cx="200" cy="186" rx="46" ry="30" fill="#fff3e0"/>
-        ${h(5) ? '' : '<ellipse cx="166" cy="121" rx="7" ry="5" fill="#fff3e0"/>'}<ellipse cx="234" cy="121" rx="7" ry="5" fill="#fff3e0"/>
-        <ellipse cx="170" cy="140" rx="13" ry="9" fill="#fff" ${st(2)}/><circle cx="178" cy="141" r="5.5" fill="#222"/>
-        <ellipse cx="230" cy="140" rx="13" ry="9" fill="#fff" ${st(2)}/><circle cx="238" cy="141" r="5.5" fill="#222"/>
-        <ellipse cx="200" cy="168" rx="14" ry="9" fill="${h(2) ? '#e8423a' : '#2b2118'}"/>
-        <path d="M184,186 Q200,199 216,186" fill="none" ${st()}/>
-        <path d="M146,214 Q200,240 254,214" fill="none" stroke="#d63a3a" stroke-width="10" stroke-linecap="round"/><circle cx="200" cy="229" r="7" fill="#ffc83d" ${st(2)}/>
-        ${h(4) ? '' : `<g><circle cx="304" cy="261" r="7" fill="#fff" ${st(2)}/><circle cx="304" cy="272" r="7" fill="#fff" ${st(2)}/><circle cx="346" cy="261" r="7" fill="#fff" ${st(2)}/><circle cx="346" cy="272" r="7" fill="#fff" ${st(2)}/><rect x="304" y="260" width="42" height="13" fill="#fff"/><line x1="306" y1="260" x2="344" y2="260" ${st(2)}/><line x1="306" y1="273" x2="344" y2="273" ${st(2)}/></g>`}
-        ${h(0) ? '' : `<text x="40" y="62" font-size="36" fill="#d63de0" ${COMIC}>wow</text>`}
-        <text x="16" y="216" font-size="22" fill="#2e6bff" ${COMIC}>such eyes</text>
-        <text x="283" y="130" font-size="19" fill="#18a558" ${COMIC}>very spot</text>
-        <text x="288" y="208" font-size="19" fill="#ff6d00" ${COMIC}>much lunch</text>` },
-
-    { name: 'Moo Deng', sub: 'the bounciest baby hippo',
-      diffs: [{ x: 178, y: 128, r: 20 }, { x: 330, y: 238, r: 38 }, { x: 222, y: 40, r: 36 }, { x: 122, y: 256, r: 18 }, { x: 178, y: 182, r: 18 }, { x: 330, y: 92, r: 28 }],
-      draw: h => `
-        <rect width="400" height="300" fill="#dff1f5"/>
-        <path d="M0,215 Q100,200 200,212 T400,208 V300 H0 Z" fill="#b98b5e"/>
-        <ellipse cx="95" cy="262" rx="78" ry="20" fill="#8fd3e8" stroke="#6bb3c9" stroke-width="2"/>
-        <circle cx="70" cy="258" r="6" fill="#fff" opacity=".85"/><circle cx="95" cy="266" r="5" fill="#fff" opacity=".85"/>${h(3) ? '' : '<circle cx="122" cy="256" r="7" fill="#fff" opacity=".85"/>'}
-        <ellipse cx="330" cy="240" rx="36" ry="27" fill="${h(1) ? '#7cc451' : '#f59b2b'}" ${st()}/><path d="M318,216 Q306,240 318,264" fill="none" ${st(2)}/><path d="M342,216 Q354,240 342,264" fill="none" ${st(2)}/><rect x="326" y="203" width="8" height="13" fill="#5a8f2e" ${st(2)}/>
-        ${h(5) ? '' : `<g><ellipse cx="320" cy="88" rx="11" ry="8" fill="#ff9ecb" ${st(2)}/><ellipse cx="340" cy="88" rx="11" ry="8" fill="#ffe066" ${st(2)}/><line x1="330" y1="80" x2="330" y2="100" ${st(2.5)}/></g>`}
-        <rect x="175" y="232" width="22" height="24" rx="6" fill="#8f8aa0" ${st()}/><rect x="205" y="236" width="22" height="22" rx="6" fill="#8f8aa0" ${st()}/><rect x="255" y="232" width="22" height="24" rx="6" fill="#8f8aa0" ${st()}/><rect x="282" y="228" width="20" height="24" rx="6" fill="#8f8aa0" ${st()}/>
-        <path d="M312,196 q14,-4 16,8" fill="none" ${st(3)}/>
-        <ellipse cx="235" cy="205" rx="80" ry="48" fill="#9a96ab" ${st()}/>
-        <ellipse cx="250" cy="184" rx="36" ry="11" fill="#fff" opacity=".35"/>
-        <ellipse cx="128" cy="130" rx="9" ry="7" fill="#9a96ab" ${st(2)}/>${h(0) ? '' : `<ellipse cx="178" cy="128" rx="9" ry="7" fill="#9a96ab" ${st(2)}/>`}
-        <ellipse cx="150" cy="172" rx="55" ry="46" fill="#a6a2b6" ${st()}/>
-        <ellipse cx="140" cy="150" rx="18" ry="6" fill="#fff" opacity=".35"/>
-        <ellipse cx="128" cy="198" rx="42" ry="26" fill="#d7aebf" ${st()}/>
-        <ellipse cx="112" cy="188" rx="4" ry="3" fill="#6b4c5a"/><ellipse cx="138" cy="186" rx="4" ry="3" fill="#6b4c5a"/>
-        <path d="M100,206 Q128,224 156,206 Q128,214 100,206Z" fill="#7a3048" ${st(2)}/>
-        <circle cx="132" cy="154" r="5" fill="#222"/><circle cx="170" cy="152" r="5" fill="#222"/><circle cx="134" cy="152" r="1.6" fill="#fff"/><circle cx="172" cy="150" r="1.6" fill="#fff"/>
-        ${h(4) ? '' : '<ellipse cx="178" cy="182" rx="11" ry="7" fill="#ff8fb1" opacity=".9"/>'}
-        <text x="200" y="54" text-anchor="middle" font-size="36" fill="#e85a8a" stroke="#fff" stroke-width="7" paint-order="stroke" font-family="'Arial Black','Noto Sans TC',sans-serif" font-weight="900">${h(2) ? 'MOO DONG' : 'MOO DENG'}</text>
-        <text x="200" y="78" text-anchor="middle" font-size="16" fill="#7a3048" ${BOLD}>extra bouncy today</text>` },
-
-    { name: 'This Is Fine', sub: 'coffee first, fire later',
-      diffs: [{ x: 223, y: 182, r: 24 }, { x: 118, y: 90, r: 26 }, { x: 73, y: 77, r: 34 }, { x: 345, y: 196, r: 32 }, { x: 284, y: 84, r: 18 }, { x: 257, y: 224, r: 22 }],
-      draw: h => `
-        <rect width="400" height="300" fill="#f0b25a"/><rect y="236" width="400" height="64" fill="#9b5e36"/>
-        <g fill="#7d7d7d" opacity=".75"><ellipse cx="60" cy="10" rx="70" ry="28"/><ellipse cx="175" cy="4" rx="80" ry="26"/><ellipse cx="295" cy="12" rx="90" ry="30"/><ellipse cx="390" cy="6" rx="50" ry="24"/></g>
-        <rect x="36" y="48" width="74" height="58" fill="#fffaf0" stroke="#6b3d1f" stroke-width="5"/>
-        <path d="M39,103 Q60,80 80,92 T107,88 V103Z" fill="#7cc451"/><circle cx="60" cy="68" r="10" fill="${h(2) ? '#6e8bff' : '#ffcf3f'}"/>
-        ${flame(300, 238, 1.1)}${h(3) ? '' : flame(345, 238, 1.3)}${flame(388, 238, 1.0)}${flame(16, 238, .9)}${flame(382, 150, .7)}
-        <rect x="160" y="208" width="10" height="30" fill="#7a4220" ${st(2)}/>${h(5) ? '' : `<rect x="252" y="208" width="10" height="30" fill="#7a4220" ${st(2)}/>`}
-        <rect x="150" y="196" width="120" height="12" fill="#8a4b25" ${st()}/>
-        <rect x="210" y="170" width="26" height="26" rx="3" fill="${h(0) ? '#4a8af0' : '#ffffff'}" ${st()}/><path d="M236,176 q12,0 12,9 q0,9 -12,9" fill="none" ${st()}/>
-        <rect x="80" y="158" width="72" height="80" rx="26" fill="#f5d06a" ${st()}/>
-        <path d="M140,190 Q165,196 182,196" fill="none" stroke="${K}" stroke-width="14" stroke-linecap="round"/><path d="M140,190 Q165,196 182,196" fill="none" stroke="#f5d06a" stroke-width="9" stroke-linecap="round"/>
-        <circle cx="118" cy="128" r="36" fill="#f5d06a" ${st()}/>
-        <ellipse cx="86" cy="134" rx="10" ry="22" fill="#a8662f" ${st(2)}/><ellipse cx="150" cy="134" rx="10" ry="22" fill="#a8662f" ${st(2)}/>
-        <circle cx="106" cy="124" r="4" fill="#222"/><circle cx="132" cy="124" r="4" fill="#222"/>
-        <ellipse cx="120" cy="144" rx="15" ry="10" fill="#fff0c2"/><circle cx="120" cy="138" r="4.5" fill="#222"/><path d="M112,148 q8,6 16,0" fill="none" ${st(2)}/>
-        ${h(1) ? '' : `<path d="M86,104 Q118,96 150,104 L150,109 Q118,101 86,109Z" fill="#3b2a20"/><path d="M98,104 Q100,74 118,74 Q136,74 138,104Z" fill="#3b2a20" ${st(2)}/>`}
-        <path d="M196,100 L168,122 L214,108" fill="#fff" ${st()}/>
-        <ellipse cx="250" cy="84" rx="72" ry="30" fill="#fff" ${st()}/><path d="M199,103 L214,108" stroke="#fff" stroke-width="5"/>
-        <text x="250" y="92" text-anchor="middle" font-size="21" fill="${K}" ${BOLD}>${h(4) ? 'This is fire.' : 'This is fine.'}</text>` },
-
-    { name: 'Capybara Spa', sub: 'orange on head, zero worries',
-      diffs: [{ x: 197, y: 96, r: 22 }, { x: 90, y: 214, r: 22 }, { x: 305, y: 128, r: 24 }, { x: 215, y: 138, r: 16 }, { x: 350, y: 198, r: 26 }, { x: 36, y: 176, r: 22 }],
-      draw: h => `
-        <rect width="400" height="300" fill="#cde7f3"/>
-        <path d="M0,150 L70,92 L130,140 L200,82 L280,150 L340,102 L400,140 V300 H0Z" fill="#9cc3a8"/>
-        <rect y="160" width="400" height="140" fill="#b9a68a"/>
-        <ellipse cx="200" cy="225" rx="175" ry="60" fill="#7fc8e0"/>
-        <ellipse cx="35" cy="192" rx="30" ry="20" fill="#8f8f8f" ${st(2)}/><ellipse cx="120" cy="168" rx="26" ry="13" fill="#9a9a9a" ${st(2)}/><ellipse cx="290" cy="168" rx="30" ry="14" fill="#9a9a9a" ${st(2)}/>
-        <ellipse cx="350" cy="198" rx="${h(4) ? 16 : 28}" ry="${h(4) ? 11 : 18}" fill="#8f8f8f" ${st(2)}/>
-        <rect x="18" y="170" width="36" height="14" rx="4" fill="#fff" ${st(2)}/><line x1="28" y1="171" x2="28" y2="183" stroke="${h(5) ? '#3b7ddd' : '#e5484d'}" stroke-width="3"/><line x1="44" y1="171" x2="44" y2="183" stroke="${h(5) ? '#3b7ddd' : '#e5484d'}" stroke-width="3"/>
-        ${steam(80, 160)}${h(2) ? '' : steam(305, 152)}${steam(362, 160)}
-        <ellipse cx="215" cy="218" rx="85" ry="45" fill="#a5734a" ${st()}/>
-        <ellipse cx="168" cy="116" rx="10" ry="8" fill="#8e6040" ${st(2)}/>
-        <rect x="150" y="112" width="122" height="84" rx="36" fill="#a5734a" ${st()}/>
-        <ellipse cx="250" cy="162" rx="24" ry="28" fill="#8e6040"/>
-        <ellipse cx="266" cy="146" rx="3" ry="5" fill="#2b2118"/>
-        <path d="M244,182 q9,5 18,0" fill="none" ${st(2)}/>
-        ${h(3) ? '<circle cx="215" cy="138" r="5.5" fill="#222"/>' : `<path d="M207,137 Q215,144 223,137" fill="none" ${st()}/>`}
-        <circle cx="195" cy="100" r="16" fill="${h(0) ? '#e5383b' : '#ffb21f'}" ${st()}/><path d="M195,84 q6,-8 15,-4 q-6,7 -15,4Z" fill="#5a9e3a" ${st(2)}/>
-        <path d="M27,205 Q200,240 373,205 L374,232 Q200,292 26,232Z" fill="#7fc8e0" opacity=".96"/>
-        <ellipse cx="200" cy="225" rx="175" ry="60" fill="none" ${st()}/>
-        <path d="M120,236 q14,-5 28,0 M250,242 q14,-5 28,0 M180,262 q14,-5 28,0" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".8"/>
-        <g><ellipse cx="86" cy="222" rx="17" ry="11" fill="${h(1) ? '#ff8fc7' : '#ffd23f'}" ${st(2)}/><circle cx="96" cy="208" r="9" fill="${h(1) ? '#ff8fc7' : '#ffd23f'}" ${st(2)}/><path d="M104,206 l8,3 l-8,3Z" fill="#ff8a00" ${st(1.5)}/><circle cx="98" cy="205" r="1.8" fill="#222"/></g>` },
-
-    { name: 'Chill Guy', sub: 'just a chill guy at lunch',
-      diffs: [{ x: 205, y: 154, r: 22 }, { x: 227, y: 268, r: 22 }, { x: 245, y: 102, r: 14 }, { x: 180, y: 72, r: 18 }, { x: 331, y: 60, r: 28 }, { x: 183, y: 239, r: 14 }],
-      draw: h => `
-        <rect width="400" height="300" fill="#e8eef3"/><ellipse cx="205" cy="276" rx="80" ry="10" fill="#cfd8df"/>
-        ${h(4) ? '' : '<g fill="#fff" stroke="#b9c6d1" stroke-width="2"><path d="M300,74 a14,14 0 0 1 8,-26 a20,20 0 0 1 36,-4 a14,14 0 0 1 10,30Z"/></g>'}
-        <text x="24" y="44" font-size="22" fill="#2b2118" ${BOLD}>just a</text><text x="24" y="74" font-size="28" fill="#4a6fa5" font-family="'Arial Black',sans-serif" font-weight="900">chill guy</text>
-        <ellipse cx="183" cy="268" rx="22" ry="9" fill="#e04b3c" ${st()}/><ellipse cx="227" cy="268" rx="22" ry="9" fill="${h(1) ? '#f2f2f2' : '#e04b3c'}" ${st()}/>
-        <rect x="168" y="200" width="30" height="64" fill="#4a6fa5" ${st()}/><rect x="212" y="200" width="30" height="64" fill="#4a6fa5" ${st()}/>
-        ${h(5) ? '' : '<rect x="175" y="232" width="16" height="14" rx="2" fill="#7d9bd0" stroke="#2f4f80" stroke-width="1.5" stroke-dasharray="3 2"/>'}
-        <path d="M166,126 Q148,166 174,204" fill="none" stroke="${K}" stroke-width="26" stroke-linecap="round"/><path d="M244,126 Q262,166 236,204" fill="none" stroke="${K}" stroke-width="26" stroke-linecap="round"/>
-        <rect x="160" y="112" width="90" height="100" rx="24" fill="#9aa0a6" ${st()}/>
-        <path d="M166,126 Q148,166 174,204" fill="none" stroke="#9aa0a6" stroke-width="20" stroke-linecap="round"/><path d="M244,126 Q262,166 236,204" fill="none" stroke="#9aa0a6" stroke-width="20" stroke-linecap="round"/>
-        ${h(0) ? '' : '<rect x="163" y="150" width="84" height="9" fill="#fff" opacity=".85"/>'}
-        <path d="M178,206 h26 M216,206 h26" stroke="${K}" stroke-width="3"/>
-        <ellipse cx="205" cy="114" rx="26" ry="8" fill="#84898f" ${st(2)}/>
-        <ellipse cx="180" cy="72" rx="10" ry="22" transform="rotate(-18 180 72)" fill="${h(3) ? '#b07d4f' : '#6e4a2c'}" ${st(2)}/>
-        <ellipse cx="205" cy="80" rx="34" ry="34" fill="#b07d4f" ${st()}/>
-        <ellipse cx="238" cy="92" rx="28" ry="16" fill="#dcb892" ${st()}/><circle cx="263" cy="86" r="6" fill="#222"/>
-        <path d="M210,74 q8,-4 16,0" fill="none" ${st(3)}/><path d="M209,64 l16,-2" fill="none" ${st(2.5)}/>
-        ${h(2) ? `<path d="M234,104 Q245,97 256,104" fill="none" ${st(2.5)}/>` : `<path d="M234,101 Q246,108 257,99" fill="none" ${st(2.5)}/>`}` },
-
-    { name: 'Woman Yelling at Cat', sub: 'cat: what did I do?',
-      diffs: [{ x: 322, y: 222, r: 14 }, { x: 344, y: 147, r: 14 }, { x: 365, y: 214, r: 16 }, { x: 236, y: 228, r: 16 }, { x: 148, y: 43, r: 16 }, { x: 320, y: 88, r: 14 }],
-      draw: h => `
-        <rect width="400" height="300" fill="#fff"/>
-        <rect x="4" y="4" width="192" height="292" fill="#f6d5c3" ${st()}/><rect x="204" y="4" width="192" height="292" fill="#dfe9d6" ${st()}/>
-        <path d="M40,296 Q100,215 160,296Z" fill="#7d8bc9" ${st()}/>
-        <ellipse cx="96" cy="160" rx="58" ry="64" fill="#e6c25b"/>
-        <ellipse cx="100" cy="168" rx="44" ry="50" fill="#ffd9bf" ${st()}/>
-        <path d="M72,140 L94,149 M106,149 L128,140" ${st(4)}/>
-        <circle cx="86" cy="160" r="4" fill="#222"/><circle cx="114" cy="160" r="4" fill="#222"/>
-        <ellipse cx="102" cy="194" rx="14" ry="12" fill="#7a2030" ${st(2)}/>
-        <ellipse cx="72" cy="180" rx="8" ry="5" fill="#ff8f8f" opacity=".7"/><ellipse cx="130" cy="180" rx="8" ry="5" fill="#ff8f8f" opacity=".7"/>
-        <path d="M140,250 L188,214" stroke="${K}" stroke-width="18" stroke-linecap="round"/><path d="M140,250 L188,214" stroke="#ffd9bf" stroke-width="12" stroke-linecap="round"/>
-        <rect x="14" y="16" width="172" height="52" rx="22" fill="#fff" ${st()}/>
-        <text x="28" y="50" font-size="20" fill="#d0312d" ${BOLD}>MY SALAD${h(4) ? '!' : '!!'}</text>
-        <path d="M268,104 L274,70 L296,94Z" fill="#fff" ${st()}/><path d="M304,94 L326,70 L332,104Z" fill="#fff" ${st()}/>
-        <path d="M275,96 L278,79 L290,93Z" fill="#ffb3c1"/><path d="M310,93 L323,79 L327,98Z" fill="${h(5) ? '#e9e9e9' : '#ffb3c1'}"/>
-        <ellipse cx="300" cy="200" rx="46" ry="40" fill="#fff" ${st()}/>
-        <ellipse cx="300" cy="128" rx="40" ry="34" fill="#fff" ${st()}/>
-        <ellipse cx="286" cy="124" rx="5" ry="6" fill="#222"/><ellipse cx="314" cy="124" rx="5" ry="6" fill="#222"/>
-        <path d="M280,110 l10,4 M310,112 l10,-6" ${st(2)}/>
-        <path d="M296,136 h8 l-4,4Z" fill="#ff8fa3"/><path d="M292,146 q8,-4 16,0" fill="none" ${st(2)}/>
-        <path d="M276,138 L248,132 M276,141 L248,141 M277,144 L250,150 M324,138 L352,132 M324,141 L352,141" ${st(1.5)}/>${h(1) ? '' : `<path d="M323,144 L350,150" ${st(1.5)}/>`}
-        <rect x="204" y="214" width="192" height="82" fill="#fdfdfd" ${st()}/>
-        <ellipse cx="296" cy="230" rx="52" ry="13" fill="#fff" ${st(2)}/>
-        <ellipse cx="276" cy="224" rx="10" ry="6" fill="#6cbf4b"/><ellipse cx="292" cy="221" rx="11" ry="6" fill="#3f9b3a"/><ellipse cx="308" cy="224" rx="10" ry="6" fill="#6cbf4b"/>${h(0) ? '' : '<ellipse cx="322" cy="222" rx="9" ry="5" fill="#3f9b3a"/>'}<circle cx="300" cy="226" r="4" fill="#e5383b"/>
-        <path d="M356,196 L374,196 L371,232 L359,232Z" fill="#eaf6ff" ${st(2)}/>
-        ${h(2) ? '<path d="M359.6,222 L370.4,222 L370,230.5 L360,230.5Z" fill="#7cc6f0"/>' : '<path d="M357.6,204 L372.4,204 L370.6,230.5 L359.4,230.5Z" fill="#7cc6f0"/>'}
-        ${h(3) ? `<g><ellipse cx="236" cy="220" rx="6" ry="8" fill="#c4c4c4" ${st(1.5)}/><line x1="236" y1="228" x2="236" y2="246" stroke="#8a8a8a" stroke-width="3" stroke-linecap="round"/></g>` : `<g stroke="#8a8a8a" stroke-width="2.5" stroke-linecap="round"><line x1="236" y1="222" x2="236" y2="246"/><line x1="231" y1="212" x2="231" y2="222"/><line x1="236" y1="212" x2="236" y2="222"/><line x1="241" y1="212" x2="241" y2="222"/><line x1="231" y1="222" x2="241" y2="222"/></g>`}` },
-
-    { name: 'Two Buttons', sub: 'the daily dilemma',
-      diffs: [{ x: 224, y: 111, r: 16 }, { x: 258, y: 234, r: 14 }, { x: 270, y: 58, r: 22 }, { x: 179, y: 201, r: 14 }, { x: 284, y: 259, r: 18 }, { x: 346, y: 30, r: 12 }],
-      draw: h => `
-        <rect width="400" height="300" fill="#f4efe6"/>
-        <rect x="40" y="16" width="320" height="120" rx="14" fill="#3d4a5c" ${st()}/>
-        ${[[54, 30], [346, 30], [54, 122], [346, 122]].map(([x, y], i) => (i === 1 && h(5)) ? '' : `<circle cx="${x}" cy="${y}" r="5" fill="#9aa5b4" ${st(1.5)}/><line x1="${x - 3}" y1="${y}" x2="${x + 3}" y2="${y}" stroke="#3d4a5c" stroke-width="1.5"/>`).join('')}
-        <rect x="100" y="70" width="60" height="22" rx="4" fill="#8a8f99" ${st()}/><path d="M106,72 Q130,30 154,72Z" fill="#e53935" ${st()}/>
-        <rect x="240" y="70" width="60" height="22" rx="4" fill="#8a8f99" ${st()}/><path d="M246,72 Q270,30 294,72Z" fill="${h(2) ? '#f2704f' : '#e53935'}" ${st()}/>
-        <path d="M118,56 q6,-8 14,-10 M258,56 q6,-8 14,-10" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".6" fill="none"/>
-        <rect x="66" y="98" width="128" height="26" rx="5" fill="#fffbe6" ${st(2)}/><text x="130" y="116" text-anchor="middle" font-size="13" fill="${K}" ${BOLD}>Leave on time</text>
-        <rect x="206" y="98" width="128" height="26" rx="5" fill="#fffbe6" ${st(2)}/><text x="270" y="116" text-anchor="middle" font-size="13" fill="${K}" ${BOLD}>${h(0) ? 'Two' : 'One'} more meeting</text>
-        <line x1="0" y1="148" x2="400" y2="148" ${st(2)}/>
-        <circle cx="200" cy="222" r="56" fill="#ffd9b8" ${st()}/>
-        <path d="M146,214 Q150,160 200,160 Q250,160 254,214 Q236,184 200,186 Q164,184 146,214Z" fill="#3b2a20"/>
-        <path d="${h(3) ? 'M168,204 L190,198' : 'M168,197 L190,204'}" ${st(4)}/><path d="M210,204 L232,197" ${st(4)}/>
-        <circle cx="180" cy="215" r="5" fill="#222"/><circle cx="220" cy="215" r="5" fill="#222"/>
-        <path d="M180,250 q6,-6 12,0 q6,6 12,0 q6,-6 12,0" fill="none" ${st(2.5)}/>
-        ${drop(150, 192)}${drop(246, 186)}${h(1) ? '' : drop(258, 226)}
-        <rect x="262" y="236" width="44" height="50" rx="6" fill="#fff" ${st(2)}/>
-        <line x1="264" y1="252" x2="304" y2="252" stroke="${h(4) ? '#3fa34d' : '#2e86de'}" stroke-width="4"/><line x1="264" y1="266" x2="304" y2="266" stroke="${h(4) ? '#3fa34d' : '#2e86de'}" stroke-width="4"/>
-        <circle cx="270" cy="238" r="13" fill="#ffd9b8" ${st(2)}/>` },
-
-    { name: 'Distracted Boyfriend', sub: 'the diet lasted 5 minutes',
-      diffs: [{ x: 54, y: 72, r: 15 }, { x: 78, y: 203, r: 11 }, { x: 82, y: 131, r: 15 }, { x: 152, y: 146, r: 20 }, { x: 205, y: 176, r: 11 }, { x: 282, y: 98, r: 13 }],
-      draw: h => `
-        <rect width="400" height="300" fill="#bfe3ff"/>
-        <rect x="0" y="40" width="110" height="192" fill="#d9c3a5" ${st(2)}/>
-        ${[15, 45, 75].flatMap(x => [60, 100, 140].map(y => `<rect x="${x}" y="${y}" width="18" height="24" fill="${x === 45 && y === 60 && h(0) ? '#ffe066' : '#7d93b2'}" ${st(1.5)}/>`)).join('')}
-        <rect x="290" y="20" width="110" height="212" fill="#c9b7d9" ${st(2)}/>
-        ${[305, 335, 365].flatMap(x => [40, 80, 120, 160].map(y => `<rect x="${x}" y="${y}" width="18" height="24" fill="#7d93b2" ${st(1.5)}/>`)).join('')}
-        <rect y="230" width="400" height="70" fill="#cfcfcf"/><line x1="0" y1="232" x2="400" y2="232" ${st(2)}/>
-        <rect x="128" y="150" width="12" height="82" fill="#8b5a2b" ${st(2)}/>
-        <circle cx="116" cy="146" r="22" fill="#4caf50" ${st(2)}/><circle cx="152" cy="146" r="${h(3) ? 17 : 24}" fill="#4caf50" ${st(2)}/><circle cx="134" cy="128" r="32" fill="#5cbf60" ${st(2)}/>
-        <line x1="282" y1="92" x2="282" y2="232" stroke="#555" stroke-width="5"/><rect x="272" y="80" width="20" height="14" rx="3" fill="#555"/><circle cx="282" cy="98" r="6" fill="${h(5) ? '#ffffff' : '#ffd84d'}" ${st(1.5)}/>
-        <line x1="78" y1="150" x2="86" y2="112" stroke="${h(2) ? '#9b59b6' : '#ff6fa8'}" stroke-width="6" stroke-linecap="round"/>
-        <path d="M52,150 L92,150 L86,226 L58,226Z" fill="#e9c9a1" ${st(2)}/><ellipse cx="72" cy="150" rx="22" ry="5" fill="#fff" ${st(2)}/>
-        <circle cx="62" cy="214" r="4" fill="#3b2418"/><circle cx="72" cy="219" r="4" fill="#3b2418"/><circle cx="82" cy="214" r="4" fill="#3b2418"/><circle cx="66" cy="204" r="4" fill="#3b2418"/>${h(1) ? '' : '<circle cx="78" cy="203" r="4" fill="#3b2418"/>'}
-        <circle cx="66" cy="176" r="2.5" fill="#222"/><circle cx="80" cy="176" r="2.5" fill="#222"/><path d="M67,184 q6,5 12,0" fill="none" ${st(2)}/>
-        <path d="M64,226 L58,244 M80,226 L86,244" ${st(3)}/>
-        <rect x="189" y="194" width="13" height="38" fill="#333"/><rect x="208" y="194" width="13" height="38" fill="#333"/>
-        <rect x="185" y="138" width="40" height="58" rx="8" fill="#4f8ad6" ${st(2)}/>
-        <circle cx="205" cy="152" r="2.5" fill="#fff"/><circle cx="205" cy="164" r="2.5" fill="#fff"/>${h(4) ? '' : '<circle cx="205" cy="176" r="2.5" fill="#fff"/>'}
-        <circle cx="205" cy="118" r="20" fill="#f2c9a0" ${st(2)}/><path d="M185,114 Q188,96 205,96 Q222,96 225,112 Q210,104 192,110Z" fill="#3b2a20"/>
-        <circle cx="194" cy="118" r="2.5" fill="#222"/><circle cx="203" cy="118" r="2.5" fill="#222"/><ellipse cx="197" cy="129" rx="3" ry="3.5" fill="#7a2030"/>
-        <path d="M222,190 Q247,232 272,190Z" fill="#fff" ${st(2)}/>
-        <circle cx="230" cy="186" r="9" fill="#6cbf4b" ${st(1.5)}/><circle cx="246" cy="182" r="10" fill="#3f9b3a" ${st(1.5)}/><circle cx="261" cy="186" r="9" fill="#6cbf4b" ${st(1.5)}/><circle cx="252" cy="190" r="5" fill="#e5383b"/>
-        <path d="M234,200 l8,3 M260,200 l-8,3" ${st(2)}/><circle cx="239" cy="207" r="2.3" fill="#222"/><circle cx="253" cy="207" r="2.3" fill="#222"/>
-        <path d="M240,222 L236,244 M254,222 L258,244" ${st(3)}/>
-        <g font-size="15" fill="#fff" stroke="${K}" stroke-width="4" paint-order="stroke" text-anchor="middle" ${BOLD}><text x="72" y="270">Bubble tea</text><text x="205" y="264">Me</text><text x="252" y="270">Diet</text></g>` },
-
-    { name: 'Stonks', sub: 'buy high, sell never',
-      diffs: [{ x: 276, y: 165, r: 14 }, { x: 336, y: 104, r: 13 }, { x: 72, y: 262, r: 14 }, { x: 352, y: 82, r: 18 }, { x: 108, y: 38, r: 18 }, { x: 125, y: 112, r: 12 }],
-      draw: h => {
-        const tops = [200, 190, 175, 160, 150, 130, 110, 95], hs = [30, 24, 28, 22, 30, 26, 24, 28];
-        const candles = tops.map((t, i) => { const x = 150 + 30 * i; const red = i === 2 || i === 5 || (i === 4 && h(0)); const c = red ? '#ef4444' : '#22c55e';
-          return `${i === 6 && h(1) ? '' : `<line x1="${x + 6}" y1="${t - 12}" x2="${x + 6}" y2="${t + hs[i] + 10}" stroke="${c}" stroke-width="2"/>`}<rect x="${x}" y="${t}" width="12" height="${hs[i]}" fill="${c}"/>`; }).join('');
-        const pts = [[140, 250], [190, 212], [222, 226], [268, 160], [300, 176], [352, 82]];
-        const [px, py] = pts[pts.length - 2], [ex, ey] = pts[pts.length - 1];
-        const L = Math.hypot(ex - px, ey - py), ux = (ex - px) / L, uy = (ey - py) / L, s = h(3) ? 15 : 26;
-        const tip = [ex + ux * s * .55, ey + uy * s * .55], bx = ex - ux * s * .45, by = ey - uy * s * .45;
-        const head = `${tip[0].toFixed(1)},${tip[1].toFixed(1)} ${(bx - uy * s * .6).toFixed(1)},${(by + ux * s * .6).toFixed(1)} ${(bx + uy * s * .6).toFixed(1)},${(by - ux * s * .6).toFixed(1)}`;
-        const coin = (x, y) => `<circle cx="${x}" cy="${y}" r="10" fill="#ffc83d" stroke="#b8860b" stroke-width="2"/><text x="${x}" y="${y + 5}" text-anchor="middle" font-size="13" font-weight="900" fill="#8a5a00" font-family="Arial,sans-serif">$</text>`;
-        return `
-        <rect width="400" height="300" fill="#0f1d40"/>
-        <g stroke="#1f3570" stroke-width="1">${[40, 80, 120, 160, 200, 240, 280, 320, 360].map(x => `<line x1="${x}" y1="0" x2="${x}" y2="300"/>`).join('')}${[40, 80, 120, 160, 200, 240, 280].map(y => `<line x1="0" y1="${y}" x2="400" y2="${y}"/>`).join('')}</g>
-        ${candles}
-        <polyline points="${pts.map(p => p.join(',')).join(' ')}" fill="none" stroke="#7dffb3" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
-        <polygon points="${head}" fill="#7dffb3"/>
-        ${coin(200, 60)}${coin(250, 36)}${h(5) ? '' : coin(125, 112)}${coin(382, 200)}
-        <path d="M14,300 Q70,222 130,300Z" fill="#2d3748" stroke="#0a1022" stroke-width="2"/>
-        <path d="M58,236 L72,250 L86,236 L80,300 L64,300Z" fill="#fff"/>
-        <polygon points="72,242 79,252 72,292 65,252" fill="#d63a3a"/>
-        ${h(2) ? '' : '<path d="M67,256 L77,262 M66,268 L78,274 M66,280 L77,286" stroke="#ffd23f" stroke-width="2.5" stroke-linecap="round"/>'}
-        <ellipse cx="72" cy="198" rx="30" ry="36" fill="#f0c8a0" stroke="#0a1022" stroke-width="2"/>
-        <ellipse cx="64" cy="176" rx="10" ry="6" fill="#fff" opacity=".45"/>
-        <circle cx="70" cy="196" r="3.5" fill="#222"/><circle cx="88" cy="196" r="3.5" fill="#222"/><path d="M70,186 l8,-2 M86,184 l7,2" stroke="#222" stroke-width="2" stroke-linecap="round"/>
-        <path d="M70,216 q10,6 22,-2" fill="none" stroke="#222" stroke-width="2.5" stroke-linecap="round"/>
-        <text x="24" y="54" font-size="40" fill="#fff" letter-spacing="2" font-family="Impact,'Arial Black',sans-serif" font-weight="900">${h(4) ? 'STOCKS' : 'STONKS'}</text>`;
-      } },
-
-    { name: 'Vibing DJ Cat', sub: 'nod along to the beat',
-      diffs: [{ x: 150, y: 30, r: 10 }, { x: 330, y: 70, r: 26 }, { x: 241, y: 156, r: 12 }, { x: 268, y: 200, r: 14 }, { x: 200, y: 250, r: 10 }, { x: 64, y: 78, r: 10 }],
-      draw: h => `
-        <rect width="400" height="300" fill="#16123a"/>
-        ${STARS.map(p => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${p.s.toFixed(2)}" fill="#fff" opacity=".85"/>`).join('')}
-        ${h(0) ? '' : '<path d="M150,22 L152.5,28 L159,30 L152.5,32 L150,38 L147.5,32 L141,30 L147.5,28Z" fill="#fff6b3"/>'}
-        <circle cx="60" cy="88" r="26" fill="#d9d9e6"/><circle cx="52" cy="92" r="6" fill="#b9b9cc"/><circle cx="70" cy="100" r="4" fill="#b9b9cc"/>${h(5) ? '' : '<circle cx="64" cy="78" r="3.5" fill="#b9b9cc"/>'}
-        <circle cx="330" cy="70" r="28" fill="#f08a5d"/><path d="M308,62 q22,-8 44,0" stroke="#d9663b" stroke-width="4" fill="none"/>
-        <ellipse cx="330" cy="72" rx="50" ry="12" fill="none" stroke="${h(1) ? '#c9a7ff' : '#ffd27a'}" stroke-width="5" transform="rotate(-12 330 72)"/>
-        <text x="96" y="160" font-size="26" fill="#ffd27a">♪</text><text x="300" y="150" font-size="22" fill="#ff8fd0">♫</text>
-        <path d="M156,112 L164,82 L186,104Z" fill="#f2a65a" ${st(2)}/><path d="M214,104 L236,82 L244,112Z" fill="#f2a65a" ${st(2)}/>
-        <path d="M162,104 L166,90 L178,103Z" fill="#ffc9d6"/><path d="M222,103 L234,90 L238,104Z" fill="#ffc9d6"/>
-        <ellipse cx="200" cy="148" rx="50" ry="42" fill="#f2a65a" ${st(2)}/>
-        <path d="M188,110 l3,12 M200,108 v13 M212,110 l-3,12" stroke="#c7742f" stroke-width="3" stroke-linecap="round"/>
-        <path d="M176,142 q8,-7 16,0 M208,142 q8,-7 16,0" fill="none" ${st(2.5)}/>
-        <path d="M196,156 h8 l-4,4Z" fill="#ff8fa3"/><path d="M190,164 q5,5 10,0 q5,5 10,0" fill="none" ${st(2)}/>
-        <path d="M174,154 L150,150 M174,158 L150,160 M226,158 L250,160" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>${h(2) ? '' : '<path d="M226,154 L250,150" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>'}
-        <path d="M150,148 Q200,86 250,148" fill="none" stroke="#333" stroke-width="8" stroke-linecap="round"/>
-        <rect x="140" y="134" width="16" height="30" rx="6" fill="#ff4fa3" ${st(2)}/><rect x="244" y="134" width="16" height="30" rx="6" fill="#ff4fa3" ${st(2)}/>
-        ${h(3) ? '' : '<path d="M254,164 C262,186 272,196 282,220" fill="none" stroke="#bbb" stroke-width="2"/>'}
-        <rect x="110" y="220" width="180" height="62" rx="8" fill="#2a2a3d" stroke="#6b6b8f" stroke-width="2"/>
-        <circle cx="158" cy="246" r="24" fill="#111" stroke="#444" stroke-width="2"/><circle cx="158" cy="246" r="8" fill="#ff4fa3"/>
-        <circle cx="242" cy="246" r="24" fill="#111" stroke="#444" stroke-width="2"/><circle cx="242" cy="246" r="8" fill="#4fd1ff"/>
-        <circle cx="200" cy="234" r="4" fill="#4fd1ff"/><circle cx="200" cy="250" r="4" fill="${h(4) ? '#ff5d5d' : '#7dffb3'}"/><circle cx="200" cy="266" r="4" fill="#ffd27a"/>
-        <ellipse cx="165" cy="222" rx="14" ry="9" fill="#f2a65a" ${st(2)}/><ellipse cx="236" cy="222" rx="14" ry="9" fill="#f2a65a" ${st(2)}/>` },
-
-    { name: 'Could Have Been an Email', sub: 'the 9 a.m. sync, again',
-      diffs: [{ x: 338, y: 55, r: 12 }, { x: 115, y: 84, r: 12 }, { x: 140, y: 128, r: 12 }, { x: 211, y: 184, r: 9 }, { x: 120, y: 203, r: 9 }, { x: 251, y: 200, r: 9 }],
-      draw: h => `
-        <rect width="400" height="300" fill="#e9e4f0"/><rect y="232" width="400" height="68" fill="#c8b89f"/>
-        <rect x="30" y="28" width="150" height="92" fill="#fff" ${st(2)}/>
-        <text x="40" y="46" font-size="12" fill="#5b8def" ${BOLD}>Q3 SYNC #47</text>
-        <line x1="42" y1="110" x2="170" y2="110" stroke="#999" stroke-width="1.5"/>
-        <rect x="50" y="80" width="16" height="30" fill="#5b8def"/><rect x="80" y="65" width="16" height="45" fill="#5b8def"/>
-        <rect x="108" y="${h(1) ? 66 : 58}" width="16" height="${h(1) ? 44 : 52}" fill="#5b8def"/><rect x="136" y="72" width="16" height="38" fill="#5b8def"/>
-        <circle cx="330" cy="55" r="24" fill="#fff" ${st(2)}/>
-        <line x1="330" y1="55" x2="330" y2="40" ${st(3)}/><line x1="330" y1="55" x2="${h(0) ? 344 : 346}" y2="${h(0) ? 64 : 55}" ${st(2)}/><circle cx="330" cy="55" r="2" fill="${K}"/>
-        <g><rect x="360" y="190" width="22" height="24" fill="#d84315" ${st(2)}/><path d="M371,190 q-14,-20 -6,-38 M371,190 q2,-24 12,-36 M371,190 q14,-14 20,-26" fill="none" stroke="#43a047" stroke-width="5" stroke-linecap="round"/></g>
-        <rect x="92" y="180" width="36" height="40" rx="8" fill="#7e57c2" ${st(2)}/><circle cx="110" cy="160" r="22" fill="#ffd9b8" ${st(2)}/>
-        <path d="M100,160 q4,4 8,0 M114,160 q4,4 8,0" fill="none" ${st(2)}/><path d="M106,170 q4,2 8,0" fill="none" ${st(1.5)}/>
-        <text x="128" y="134" font-size="13" fill="#5b8def" ${BOLD}>${h(2) ? 'Zz' : 'Zzz'}</text>
-        <rect x="182" y="176" width="36" height="44" rx="8" fill="#26a69a" ${st(2)}/><circle cx="200" cy="154" r="22" fill="#f2c9a0" ${st(2)}/>
-        <circle cx="192" cy="152" r="2.5" fill="#222"/><circle cx="208" cy="152" r="2.5" fill="#222"/><path d="M193,164 h14" ${st(2)}/><path d="M186,142 l10,3 M214,142 l-10,3" ${st(1.5)}/>
-        <rect x="272" y="180" width="36" height="40" rx="8" fill="#ef6c00" ${st(2)}/><circle cx="290" cy="160" r="22" fill="#8d5524" ${st(2)}/>
-        <circle cx="284" cy="164" r="2.5" fill="#222"/><circle cx="298" cy="164" r="2.5" fill="#222"/><path d="M285,172 q5,3 10,0" fill="none" ${st(1.5)}/>
-        <rect x="204" y="180" width="14" height="9" rx="1.5" fill="${h(3) ? '#ffd43b' : '#ff8fa3'}" ${st(1)}/>
-        <ellipse cx="200" cy="222" rx="160" ry="30" fill="#8b5e3c" ${st()}/>
-        <path d="M95,214 L100,186 L145,186 L140,214Z" fill="#b7bcc6" ${st(2)}/>${h(4) ? '' : '<circle cx="120" cy="203" r="4" fill="#ff4fa3"/>'}
-        <path d="M255,214 L260,186 L305,186 L300,214Z" fill="#b7bcc6" ${st(2)}/><circle cx="279" cy="200" r="4" fill="#4fd1ff"/>
-        <path d="M244,202 L258,202 L256,222 L246,222Z" fill="#fff" ${st(1.5)}/><rect x="243" y="198" width="16" height="5" rx="2" fill="${h(5) ? '#222' : '#fff'}" ${st(1.5)}/>
-        <path d="M168,206 L184,206 L182,222 L170,222Z" fill="#fff" ${st(1.5)}/><rect x="167" y="202" width="18" height="5" rx="2" fill="#fff" ${st(1.5)}/>
-        <text x="200" y="282" text-anchor="middle" font-size="17" fill="#fff" stroke="${K}" stroke-width="5" paint-order="stroke" ${BOLD}>this meeting could have been an email</text>` },
-
-    { name: 'Reply All Storm', sub: 'please stop replying all',
-      diffs: [{ x: 372, y: 17, r: 12 }, { x: 24, y: 127, r: 10 }, { x: 374, y: 154, r: 11 }, { x: 389, y: 171, r: 8 }, { x: 50, y: 239, r: 9 }, { x: 345, y: 67, r: 9 }],
-      draw: h => {
-        const rows = [['Big Boss', 'RE: RE: RE: RE: Lunch order', '9:02', '#ff8a65', 1], ['IT Helpdesk', 'Have you tried turning it off and on?', '9:15', '#4db6ac', 0],
-          ['HR Team', 'Mandatory fun on Friday!', '10:30', h(1) ? '#9575cd' : '#ba68c8', 1], ['Kevin', 'Please stop replying all', h(2) ? '10:37' : '10:31', '#ffd54f', h(3) ? 0 : 1],
-          ['Facilities', 'Who left fish in the fridge?', '11:05', '#90a4ae', 0], ['Everyone', h(4) ? '+2' : '+1', '11:06', '#81c784', 1]];
-        return `
-        <rect width="400" height="300" fill="#f4f6fb"/>
-        <rect width="400" height="34" fill="#2f6bff"/><text x="14" y="23" font-size="16" fill="#fff" ${BOLD}>Inbox</text>
-        <rect x="350" y="8" width="44" height="18" rx="9" fill="#ff3d6e"/><text x="372" y="21" text-anchor="middle" font-size="12" fill="#fff" ${BOLD}>${h(0) ? '98+' : '99+'}</text>
-        ${rows.map(([n, s, t, c, u], i) => { const y = 40 + i * 35; return `
-          <rect x="4" y="${y}" width="392" height="32" rx="6" fill="${u ? '#fff' : '#eef1f7'}" stroke="#d6dbe6"/>
-          <circle cx="24" cy="${y + 16}" r="11" fill="${c}"/><text x="24" y="${y + 20}" text-anchor="middle" font-size="11" fill="#fff" ${BOLD}>${n[0]}</text>
-          <text x="44" y="${y + 13}" font-size="11" fill="#1d1a16" ${BOLD}>${n}</text>
-          <text x="44" y="${y + 27}" font-size="10" fill="#6f675c" font-family="Inter,Arial,sans-serif">${s}</text>
-          <text x="380" y="${y + 13}" text-anchor="end" font-size="10" fill="#6f675c" font-family="Inter,Arial,sans-serif">${t}</text>
-          ${u ? `<circle cx="389" cy="${y + 26}" r="3.5" fill="#2f6bff"/>` : ''}`; }).join('')}
-        ${h(5) ? '' : '<path d="M345,61 L347,65.5 L351.5,66 L348,69 L349,73.5 L345,71 L341,73.5 L342,69 L338.5,66 L343,65.5Z" fill="#ffc107"/>'}
-        <rect x="130" y="258" width="140" height="32" rx="16" fill="#e5372f" ${st(2)}/><text x="200" y="279" text-anchor="middle" font-size="15" fill="#fff" ${BOLD}>REPLY ALL</text>
-        <path d="M262,280 l0,16 l4,-4 l4,8 l3,-1.5 l-4,-8 l6,0Z" fill="#fff" ${st(1.5)}/>`;
-      } },
-
-    { name: 'Microwave Queue', sub: '12:01 p.m. and already 6 deep',
-      diffs: [{ x: 275, y: 82, r: 11 }, { x: 286, y: 140, r: 8 }, { x: 96, y: 77, r: 9 }, { x: 330, y: 152, r: 12 }, { x: 195, y: 98, r: 13 }, { x: 61, y: 202, r: 13 }],
-      draw: h => {
-        const box = (x, lid) => `<rect x="${x}" y="152" width="36" height="20" rx="3" fill="#fafafa" ${st(1.5)}/><rect x="${x - 2}" y="146" width="40" height="8" rx="3" fill="${lid}" ${st(1.5)}/>`;
-        return `
-        <rect width="400" height="300" fill="#f7efe3"/>
-        <rect x="20" y="40" width="84" height="48" fill="#fff59d" ${st(2)}/>
-        <text x="62" y="60" text-anchor="middle" font-size="11" fill="#c62828" ${BOLD}>CLEAN UP</text><text x="100" y="80" text-anchor="end" font-size="11" fill="#c62828" ${BOLD}>YOUR MESS${h(2) ? '.' : '!'}</text>
-        <rect x="0" y="172" width="400" height="128" fill="#c9a27e" ${st(2)}/>
-        <rect x="130" y="60" width="170" height="112" rx="8" fill="#dcdcdc" ${st()}/>
-        <rect x="140" y="72" width="110" height="88" rx="4" fill="#333"/>
-        <ellipse cx="195" cy="148" rx="36" ry="6" fill="#777"/><rect x="178" y="128" width="34" height="18" rx="3" fill="#ffb74d"/>
-        ${h(4) ? '' : '<path d="M195,124 q-8,-10 0,-20 q8,-10 0,-20" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" opacity=".85"/>'}
-        <rect x="258" y="74" width="34" height="16" rx="2" fill="#102a12"/><text x="275" y="86" text-anchor="middle" font-size="11" fill="#7dff8a" font-family="'Courier New',monospace" font-weight="700">${h(0) ? '0:47' : '0:42'}</text>
-        ${[0, 1, 2].flatMap(r => [0, 1, 2].map(c => { const x = 264 + c * 11, y = 104 + r * 18; const red = r === 2 && c === 2 && h(1); return `<circle cx="${x}" cy="${y}" r="4" fill="${red ? '#e57373' : '#9e9e9e'}"/>`; })).join('')}
-        <rect x="262" y="148" width="28" height="12" rx="3" fill="#43a047" ${st(1)}/>
-        ${box(20, '#ef5350')}${box(70, '#ffca28')}${box(312, h(3) ? '#4dd0e1' : '#4fc3f7')}${box(356, '#ab47bc')}
-        <rect x="50" y="190" width="22" height="24" rx="3" fill="#fff" ${st(1.5)}/>
-        ${h(5) ? '<path d="M50,196 q-9,0 -9,6 q0,6 9,6" fill="none" ' + st(1.5) + '/>' : '<path d="M72,196 q9,0 9,6 q0,6 -9,6" fill="none" ' + st(1.5) + '/>'}
-        <text x="200" y="282" text-anchor="middle" font-size="16" fill="#fff" stroke="${K}" stroke-width="5" paint-order="stroke" ${BOLD}>microwave queue · 12:01 p.m.</text>`;
-      } },
-
-    { name: 'Printer Jam', sub: 'it was working yesterday',
-      diffs: [{ x: 266, y: 132, r: 9 }, { x: 230, y: 160, r: 8 }, { x: 345, y: 150, r: 13 }, { x: 136, y: 136, r: 11 }, { x: 312, y: 200, r: 10 }, { x: 275, y: 86, r: 11 }],
-      draw: h => {
-        const paper = (x, y, a) => `<rect x="${x - 12}" y="${y - 15}" width="24" height="30" fill="#fff" stroke="#9e9e9e" stroke-width="1.5" transform="rotate(${a} ${x} ${y})"/><path d="M${x - 7},${y - 7} h14 M${x - 7},${y - 1} h14 M${x - 7},${y + 5} h9" stroke="#bbb" stroke-width="1.2" transform="rotate(${a} ${x} ${y})"/>`;
-        return `
-        <rect width="400" height="300" fill="#e6eef5"/><rect y="230" width="400" height="70" fill="#b0bec5"/>
-        ${paper(60, 80, -18)}${paper(330, 60, 22)}${h(2) ? '' : paper(345, 150, -32)}${paper(50, 180, 12)}${paper(95, 40, 30)}
-        <rect x="130" y="95" width="140" height="18" fill="#cfd8dc" ${st(2)}/>
-        <rect x="110" y="110" width="180" height="92" rx="10" fill="#eceff1" ${st()}/>
-        <rect x="150" y="185" width="100" height="8" rx="2" fill="#455a64"/>
-        <path d="M160,190 l8,22 l10,-14 l10,18 l12,-16 l10,20 l10,-12 l8,10 l-4,-28Z" fill="#fff" stroke="#9e9e9e" stroke-width="1.5"/>
-        <rect x="240" y="125" width="40" height="14" rx="2" fill="#263238"/><text x="260" y="136" text-anchor="middle" font-size="10" fill="#ff5252" font-family="'Courier New',monospace" font-weight="700">${h(0) ? 'JAN' : 'JAM'}</text>
-        <circle cx="230" cy="160" r="4.5" fill="${h(1) ? '#ffb300' : '#ff5252'}"/><circle cx="244" cy="160" r="4.5" fill="#66bb6a"/>
-        <rect x="125" y="125" width="22" height="22" fill="${h(3) ? '#b9f6ca' : '#fff176'}" transform="rotate(-6 136 136)"/><text x="136" y="140" text-anchor="middle" font-size="9" fill="#c62828" transform="rotate(-6 136 136)" ${BOLD}>!!</text>
-        ${h(5) ? '' : `<path d="M267,78 L283,78 L281,95 L269,95Z" fill="#fff" ${st(1.5)}/><rect x="266" y="75" width="18" height="4" rx="1.5" fill="#6d4c41"/>`}
-        <path d="M400,250 Q350,230 326,206" fill="none" stroke="#37474f" stroke-width="18" stroke-linecap="round"/>
-        <ellipse cx="314" cy="200" rx="18" ry="9" fill="#5d4037" ${st(2)}/>${h(4) ? '' : '<path d="M300,205 h26" stroke="#fff" stroke-width="2"/>'}
-        <path d="M296,186 l-6,-6 M300,180 l-2,-8 M306,180 l2,-8" ${st(2)}/>
-        <text x="200" y="272" text-anchor="middle" font-size="20" fill="#fff" stroke="${K}" stroke-width="5" paint-order="stroke" ${BOLD}>PAPER JAM. AGAIN.</text>`;
-      } },
-
-    { name: 'Is It Friday Yet?', sub: 'spoiler: it is Tuesday',
-      diffs: [{ x: 68, y: 86, r: 11 }, { x: 224, y: 118, r: 11 }, { x: 148, y: 221, r: 8 }, { x: 300, y: 221, r: 8 }, { x: 352, y: 176, r: 12 }, { x: 302, y: 98, r: 11 }],
-      draw: h => {
-        const code = [[140, 74, 60, '#c792ea'], [150, 83, 90, '#82aaff'], [150, 92, 50, '#c3e88d'], [160, 101, 80, '#f78c6c'], [160, 110, 40, '#82aaff'], [140, 119, h(1) ? 95 : 70, '#82aaff'], [150, 128, 110, '#c3e88d'], [150, 137, 30, '#c792ea'], [140, 146, 66, '#ffcb6b'], [150, 155, 84, '#82aaff']];
-        return `
-        <rect width="400" height="300" fill="#dfe7ef"/>
-        <text x="390" y="32" text-anchor="end" font-size="17" fill="#2f6bff" ${BOLD}>IS IT FRIDAY YET?</text>
-        <rect x="20" y="30" width="80" height="88" fill="#fff" ${st(2)}/><rect x="20" y="30" width="80" height="20" fill="#e53935" ${st(2)}/>
-        <text x="60" y="45" text-anchor="middle" font-size="12" fill="#fff" ${BOLD}>NOV</text>
-        <text x="60" y="96" text-anchor="middle" font-size="34" fill="${K}" ${BOLD}>${h(0) ? '18' : '17'}</text>
-        <text x="60" y="111" text-anchor="middle" font-size="10" fill="#6f675c" font-family="Inter,Arial,sans-serif">Tuesday</text>
-        <rect x="0" y="206" width="400" height="94" fill="#a1887f" ${st(2)}/>
-        <rect x="204" y="168" width="22" height="30" fill="#546e7a"/><rect x="180" y="196" width="70" height="10" rx="3" fill="#546e7a"/>
-        <rect x="130" y="60" width="170" height="110" rx="6" fill="#263238" ${st()}/>
-        ${code.map(([x, y, w, c]) => `<rect x="${x}" y="${y}" width="${w}" height="4" rx="2" fill="${c}"/>`).join('')}
-        <rect x="290" y="62" width="22" height="20" fill="#fff176" transform="rotate(6 301 72)"/>${h(5) ? '' : '<rect x="291" y="88" width="22" height="20" fill="#ff8fa3" transform="rotate(-5 302 98)"/>'}<rect x="118" y="140" width="20" height="20" fill="#81d4fa" transform="rotate(-8 128 150)"/>
-        <rect x="140" y="214" width="130" height="26" rx="4" fill="#eceff1" ${st(1.5)}/>
-        ${[0, 1].flatMap(r => Array.from({ length: 10 }, (_, c) => { const x = 144 + c * 12.5, y = 217 + r * 11; const esc = r === 0 && c === 0; return `<rect x="${x}" y="${y}" width="9" height="8" rx="1.5" fill="${esc && h(2) ? '#ef5350' : '#cfd8dc'}"/>`; })).join('')}
-        <path d="M300,214 C300,190 260,190 250,198" fill="none" stroke="#90a4ae" stroke-width="2"/>
-        <ellipse cx="300" cy="228" rx="10" ry="14" fill="#eceff1" ${st(1.5)}/>${h(3) ? '' : '<line x1="300" y1="217" x2="300" y2="224" stroke="#78909c" stroke-width="2.5" stroke-linecap="round"/>'}
-        <rect x="338" y="196" width="28" height="30" rx="4" fill="#fff" ${st(1.5)}/><path d="M366,203 q10,0 10,8 q0,8 -10,8" fill="none" ${st(1.5)}/>
-        <text x="352" y="215" text-anchor="middle" font-size="8" fill="#e53935" ${BOLD}>FRI?</text>
-        ${h(4) ? '' : steam(352, 192).replace('stroke="#fff"', 'stroke="#90a4ae"').replace('stroke-width="5"', 'stroke-width="3"')}
-        <rect x="45" y="180" width="30" height="28" fill="#d84315" ${st(2)}/><path d="M60,180 q-16,-22 -8,-44 M60,180 q2,-26 14,-40 M60,180 q16,-16 22,-30" fill="none" stroke="#43a047" stroke-width="6" stroke-linecap="round"/>`;
-      } },
-  ];
-
+  const sec = ms => (ms / 1000).toFixed(1) + 's';
+  const lvTitle = l => bi(NAMES[l][0], NAMES[l][1]);
   function pickDiffs(seed, lv) {
     const r = rng((seed ^ Math.imul(lv + 1, 2654435761)) >>> 0);
-    const idx = SCENES[lv].diffs.map((_, i) => i);
-    for (let i = idx.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [idx[i], idx[j]] = [idx[j], idx[i]]; }
+    const idx = [0, 1, 2, 3, 4, 5];
+    for (let i = 5; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [idx[i], idx[j]] = [idx[j], idx[i]]; }
     return idx.slice(0, PICK).sort((a, b) => a - b);
   }
+  let myPid = store('sd-pid'); if (!myPid) { myPid = 'p' + Math.random().toString(36).slice(2, 10); store('sd-pid', myPid); }
+  $('credits').innerHTML = CREDITS.map((c, i) => `${i + 1}. ${esc(NAMES[i][1])} — <a href="${esc(c[2])}" target="_blank" rel="noopener">${esc(c[0])}</a>, ${esc(c[1])}（已修改 edited）`).join('<br>');
 
-  // ================= 音效 =================
+  // 音效（電視用）
   let ac = null;
-  function beep(f, d, type = 'sine', v = .07, delay = 0) {
+  function beep(f, d, type = 'sine', v = .08, delay = 0) {
     try {
       ac = ac || new (window.AudioContext || window.webkitAudioContext)();
       const t = ac.currentTime + delay, o = ac.createOscillator(), g = ac.createGain();
@@ -658,435 +288,512 @@ body.tv .ov { min-height: 50vh; }
       o.connect(g).connect(ac.destination); o.start(t); o.stop(t + d);
     } catch {}
   }
-  const sndOk = () => { beep(880, .12); beep(1320, .18, 'sine', .07, .08); };
-  const sndMiss = () => beep(150, .25, 'square', .04);
 
-  // ================= 狀態 =================
-  const screens = ['lobby', 'room', 'game', 'result'];
-  let screen = 'lobby';
-  const show = s => { screen = s; screens.forEach(k => $(k).hidden = k !== s); $('wrap').classList.toggle('wide', s === 'game'); };
-
-  let peer = null, conn = null, isHost = false, solo = false, tvMode = false, myIdx = 0, roomCode = '';
-  let tvs = [];
-  let players = [];   // 房主端的權威名單：[0] 房主、[1] 加入者
-  let G = null;       // 房主端的權威遊戲狀態
-  let S = null;       // 所有角色收到的最新狀態
-  let deadline = 0, myLockUntil = 0;
-  const COLS = ['var(--p1)', 'var(--p2)'];
-  const blankP = nick => ({ nick, ready: false, gone: false });
-  const freshG = () => ({ phase: 'room', rid: null, seed: 0, lv: 0, found: [], scores: [0, 0], miss: [0, 0], hist: [], deadline: 0, lock: [0, 0], timeout: false });
-
-  function setConn(on, txt) { $('dot').classList.toggle('on', on); $('connTxt').textContent = txt; }
-  function lockLobby(on) { ['hostBtn', 'joinBtn', 'soloBtn', 'tvBtn'].forEach(id => $(id).disabled = on); }
-  function needNick() {
-    const nick = $('nick').value.trim().slice(0, 10);
-    if (!nick) { $('lobbyMsg').textContent = 'Please enter your name first.'; $('nick').focus(); return null; }
-    store('md-nick', nick); return nick;
+  // 圖片：底圖＋所選差異圖層
+  function picSVG(lv, sel, right) {
+    const b = `img/L${lv + 1}/`;
+    let h = `<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${esc(NAMES[lv][1])} ${right ? 'B' : 'A'}"><image href="${b}base.webp" width="400" height="300"/>`;
+    if (right) sel.forEach(i => { const d = DIFFS[lv][i]; h += `<image href="${b}p${i}.webp" x="${d.px}" y="${d.py}" width="${d.pw}" height="${d.ph}" preserveAspectRatio="none"/>`; });
+    return h + '<g class="marks"></g><g class="fx"></g></svg>';
   }
-  const readCode = () => $('code').value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
-  if (typeof Peer === 'undefined') $('lobbyMsg').textContent = 'Could not load the multiplayer module. Check your connection and refresh. Solo practice still works.';
-
-  // ================= 房主邏輯（唯一裁判） =================
-  function sendAll(m) {
-    try { if (conn && conn.open) conn.send(m); } catch {}
-    tvs.forEach(c => { try { if (c.open) c.send(m); } catch {} });
+  function markHTML(d, kind) {
+    const r = Math.max(d.r, 11) + 3;
+    if (kind === 'miss') return `<g class="rv"><circle cx="${d.x}" cy="${d.y}" r="${r}" fill="none" stroke="#000" stroke-width="6" opacity=".5"/><circle cx="${d.x}" cy="${d.y}" r="${r}" fill="none" stroke="#ffb547" stroke-width="3" stroke-dasharray="6 4"/></g>`;
+    return `<g class="mk"><circle cx="${d.x}" cy="${d.y}" r="${r}" fill="none" stroke="#000" stroke-width="7" opacity=".45"/><circle cx="${d.x}" cy="${d.y}" r="${r}" fill="none" stroke="#3ddc97" stroke-width="3.5"/></g>`;
   }
-  function pub() {
-    const now = performance.now();
-    const m = { t: 'st', phase: G.phase, rid: G.rid, seed: G.seed, lv: G.lv, found: G.found.slice(), scores: G.scores.slice(), miss: G.miss.slice(),
-      hist: G.hist.slice(), timeout: G.timeout, left: Math.max(0, G.deadline - now), solo, code: roomCode,
-      players: players.map(p => p && { nick: p.nick, ready: p.ready, gone: !!p.gone }) };
-    sendAll(m); applyState(m);
-  }
-  function hostStart() {
-    Object.assign(G, { rid: 'r' + Date.now().toString(36), seed: Math.floor(Math.random() * 1e9), lv: 0, found: [], scores: [0, 0], miss: [0, 0], hist: [], lock: [0, 0], timeout: false, phase: 'count', deadline: performance.now() + 3000 });
-    players.forEach(p => p && (p.ready = false));
-    pub();
-  }
-  function maybeStart() {
-    if (!G || (G.phase !== 'room' && G.phase !== 'over')) return;
-    const need = solo ? 1 : 2;
-    const live = players.filter(p => p && !p.gone);
-    if (live.length === need && players.length === need && live.every(p => p.ready)) hostStart();
-  }
-  function startLevel(i) { Object.assign(G, { lv: i, found: [], timeout: false, lock: [0, 0], phase: 'play', deadline: performance.now() + TIME[i] * 1000 }); pub(); }
-  function endLevel(timeout) {
-    G.timeout = timeout;
-    G.hist[G.lv] = [0, 1].map(w => G.found.filter(f => f.who === w).length);
-    G.phase = 'between'; G.deadline = performance.now() + (timeout ? 5500 : 4000); pub();
-  }
-  function hostTick() {
-    if (!isHost || !G) return;
-    if (!['count', 'play', 'between'].includes(G.phase) || performance.now() < G.deadline) return;
-    if (G.phase === 'count') startLevel(0);
-    else if (G.phase === 'play') endLevel(true);
-    else if (G.lv + 1 < LV) startLevel(G.lv + 1);
-    else { G.phase = 'over'; G.deadline = 0; players.forEach(p => p && (p.ready = false)); pub(); }
-  }
-  setInterval(hostTick, 100);
-
-  function judge(who, lv, x, y) {
-    if (!G || G.phase !== 'play' || lv !== G.lv || (who !== 0 && who !== 1)) return;
-    x = +x; y = +y; if (!Number.isFinite(x) || !Number.isFinite(y)) return;
-    const now = performance.now(); if (now < G.lock[who]) return;
-    const sel = pickDiffs(G.seed, G.lv), D = SCENES[G.lv].diffs;
-    let best = -1, bd = 1e9, onFound = false;
-    sel.forEach((id, k) => {
-      const d = D[id], dist = Math.hypot(d.x - x, d.y - y);
-      if (dist > d.r + TOL) return;
-      if (G.found.some(f => f.k === k)) { onFound = true; return; }
-      if (dist - d.r < bd) { bd = dist - d.r; best = k; }
-    });
-    if (best >= 0) {
-      G.found.push({ k: best, who }); G.scores[who]++;
-      ev({ who, lv, x, y, ok: true, k: best });
-      if (G.found.length >= PICK) endLevel(false); else pub();
-    } else if (!onFound) {
-      G.miss[who]++; G.lock[who] = now + LOCK_MS;
-      ev({ who, lv, x, y, ok: false }); pub();
-    }
-  }
-  function ev(e) { const m = { t: 'ev', ...e }; sendAll(m); onEv(m); }
-
-  // ================= 連線 =================
-  function renderTvNote() {
-    $('tvNote').hidden = !tvs.length;
-    $('tvNote').textContent = tvs.length === 1 ? 'TV view connected.' : `${tvs.length} TV views connected.`;
+  // 預先載入所有圖片，開局時不用等
+  let preloaded = null;
+  function preload(cb) {
+    if (preloaded) { cb && cb(preloaded.done, preloaded.total); return; }
+    const urls = []; for (let l = 1; l <= LV; l++) { urls.push(`img/L${l}/base.webp`); for (let i = 0; i < 6; i++) urls.push(`img/L${l}/p${i}.webp`); }
+    preloaded = { done: 0, total: urls.length, imgs: [] };
+    urls.forEach(u => { const im = new Image(); im.onload = im.onerror = () => { preloaded.done++; cb && cb(preloaded.done, preloaded.total); }; im.src = u; preloaded.imgs.push(im); });
   }
 
-  $('hostBtn').onclick = () => {
-    const nick = needNick(); if (!nick || typeof Peer === 'undefined') return;
-    lockLobby(true); $('lobbyMsg').textContent = 'Creating room…';
+  // ================= 主持引擎（電視或自己練習） =================
+  let host = null;
+  function makeHost(opt) {
+    const H = { opt, phase: 'lobby', lv: 0, rid: null, seed: 0, t0: 0, deadline: 0, players: new Map(), paused: false, firstDone: null, dirty: true, joinSeq: 0 };
+    H.limit = () => TIME[H.lv] * 1000;
+    H.send = (P, m) => {
+      if (P.local) { setTimeout(() => client.onMsg(m), 0); return; }
+      try { if (P.conn && P.conn.open) P.conn.send(m); } catch {}
+    };
+    H.stMsg = () => ({ t: 'st', phase: H.phase, lv: H.lv, rid: H.rid, seed: H.seed, left: Math.max(0, H.deadline - now()), n: H.online().length, code: opt.code || '' });
+    H.online = () => [...H.players.values()].filter(p => p.online);
+    H.ranked = () => [...H.players.values()].sort((a, b) => b.score - a.score || a.timeMs - b.timeMs || a.seq - b.seq);
+    H.meMsg = P => {
+      const rk = H.ranked(); const rank = rk.indexOf(P) + 1;
+      const cur = P.cur && P.cur.rid === H.rid && P.cur.lv === H.lv ? P.cur : null;
+      return { t: 'me', score: P.score, rank, of: rk.length, found: cur ? cur.found.map(f => f.k) : [], done: cur ? cur.done : false, doneT: cur ? cur.doneT : null,
+        last: P.last && P.last.lv === H.lv && P.last.rid === H.rid ? P.last : null, top: rk.slice(0, 3).map(p => [p.nick, p.score]) };
+    };
+    H.broadcast = () => { const m = H.stMsg(); H.players.forEach(P => { if (P.online) H.send(P, m); }); H.dirty = true; };
+    H.syncAll = () => H.players.forEach(P => { if (P.online) H.send(P, H.meMsg(P)); });
+    let lobbyTimer = 0;
+    H.lobbyBroadcast = () => { if (lobbyTimer) return; lobbyTimer = setTimeout(() => { lobbyTimer = 0; H.broadcast(); }, 400); };
+
+    H.join = (pid, nick, conn, local) => {
+      pid = String(pid || '').slice(0, 24); nick = String(nick || '').trim().slice(0, 12) || 'Player';
+      let P = H.players.get(pid);
+      if (!P) {
+        if (H.players.size >= MAXP) { try { conn && conn.send({ t: 'full' }); } catch {} return null; }
+        P = { pid, nick, score: 0, timeMs: 0, seq: H.joinSeq++, cur: null, last: null, hist: [] };
+        H.players.set(pid, P);
+      }
+      if (P.conn && P.conn !== conn) { try { P.conn.close(); } catch {} }
+      Object.assign(P, { nick, conn, local: !!local, online: true });
+      H.send(P, H.stMsg()); H.send(P, H.meMsg(P));
+      if (H.phase === 'lobby') H.lobbyBroadcast();
+      H.dirty = true; return P;
+    };
+    H.leave = P => { P.online = false; P.conn = null; if (H.phase === 'lobby') { H.players.delete(P.pid); H.lobbyBroadcast(); } H.dirty = true; H.checkAllDone(); };
+
+    H.start = () => {
+      if (!H.players.size) return;
+      Object.assign(H, { rid: 'r' + Date.now().toString(36), seed: Math.floor(Math.random() * 1e9), lv: 0 });
+      H.players.forEach(P => Object.assign(P, { score: 0, timeMs: 0, cur: null, last: null, hist: [] }));
+      [...H.players.values()].filter(p => !p.online).forEach(p => H.players.delete(p.pid));
+      H.toCount();
+    };
+    H.toCount = () => { H.phase = 'count'; H.deadline = now() + COUNT_MS; H.firstDone = null; H.broadcast(); H.syncAll(); };
+    H.startLevel = () => {
+      H.phase = 'play'; H.t0 = now(); H.deadline = H.t0 + H.limit();
+      H.players.forEach(P => { P.cur = { rid: H.rid, lv: H.lv, found: [], misses: 0, done: false, doneT: null }; });
+      H.broadcast(); H.syncAll();
+    };
+    H.checkAllDone = () => {
+      if (H.phase !== 'play') return;
+      const on = H.online().filter(p => p.cur && p.cur.lv === H.lv);
+      if (on.length && on.every(p => p.cur.done)) H.deadline = Math.min(H.deadline, now() + 1000);
+    };
+    H.endLevel = () => {
+      const L = H.limit();
+      H.players.forEach(P => {
+        const c = P.cur && P.cur.rid === H.rid && P.cur.lv === H.lv ? P.cur : null;
+        const found = c ? c.found.length : 0, done = c ? c.done : false;
+        const pts = found * 100 + (done ? 200 + Math.round(300 * Math.max(0, 1 - c.doneT / L)) : 0);
+        P.score += pts; P.timeMs += done ? c.doneT : L;
+        P.last = { rid: H.rid, lv: H.lv, pts, found, done, doneT: done ? c.doneT : null, misses: c ? c.misses : 0 };
+        P.hist[H.lv] = pts;
+      });
+      const lvRank = [...H.players.values()].filter(p => p.last).sort((a, b) => b.last.pts - a.last.pts || (a.last.doneT ?? 1e9) - (b.last.doneT ?? 1e9));
+      lvRank.forEach((p, i) => p.last.rank = i + 1);
+      H.phase = 'reveal'; H.deadline = now() + (opt.solo ? SOLO_REVEAL_MS : REVEAL_MS); H.paused = false;
+      H.broadcast(); H.syncAll();
+    };
+    H.next = () => {
+      if (H.phase === 'reveal') { if (H.lv + 1 >= LV) { H.phase = 'final'; H.deadline = 0; H.broadcast(); H.syncAll(); if (opt.tv) fanfare(); } else { H.lv++; H.toCount(); } }
+      else if (H.phase === 'play') H.endLevel();
+      else if (H.phase === 'count') H.startLevel();
+    };
+    H.toLobby = () => { H.phase = 'lobby'; H.rid = null; H.deadline = 0; [...H.players.values()].filter(p => !p.online).forEach(p => H.players.delete(p.pid)); H.players.forEach(P => Object.assign(P, { score: 0, timeMs: 0, cur: null, last: null, hist: [] })); H.broadcast(); H.syncAll(); };
+
+    H.onMsg = (P, m) => {
+      if (!P || !m || typeof m !== 'object') return;
+      if (m.t === 'find') {
+        const c = P.cur, k = m.k | 0;
+        if (H.phase !== 'play' || !c || m.rid !== H.rid || m.lv !== H.lv || c.done || k < 0 || k >= PICK || c.found.some(f => f.k === k)) return;
+        const t = now() - H.t0;
+        c.found.push({ k, t }); c.lastT = t;
+        if (c.found.length >= PICK) {
+          c.done = true; c.doneT = t;
+          if (!H.firstDone) { H.firstDone = P.pid; if (opt.tv) { beep(880, .15); beep(1320, .25, 'sine', .08, .1); } }
+          H.send(P, H.meMsg(P)); H.checkAllDone();
+        }
+        H.dirty = true;
+      } else if (m.t === 'miss') {
+        if (P.cur && H.phase === 'play' && m.rid === H.rid) { P.cur.misses++; H.dirty = true; }
+      }
+    };
+    H.tick = () => {
+      const t = now();
+      if (H.phase === 'count' && t >= H.deadline) H.startLevel();
+      else if (H.phase === 'play' && t >= H.deadline) H.endLevel();
+      else if (H.phase === 'reveal' && !H.paused && t >= H.deadline) H.next();
+    };
+    H.iv = setInterval(H.tick, 100);
+    return H;
+  }
+  function fanfare() { [523, 659, 784, 1047].forEach((f, i) => beep(f, .3, 'triangle', .08, i * .14)); }
+
+  // ================= 電視畫面 =================
+  let tvPeer = null, tvCode = '', tvLast = { key: '' }, joinUrl = '';
+  function startTV() {
+    if (typeof Peer === 'undefined') { $('joinMsg').textContent = '連線模組載入失敗，請重新整理。 Could not load the network module. Please refresh.'; return; }
+    beep(1, .01, 'sine', .0001);
+    $('hostBtn').disabled = true; $('joinMsg').textContent = '開房中… Creating room…';
     const tryOpen = attempt => {
       const code = randCode();
       const p = new Peer(PREFIX + code.toLowerCase());
       p.on('open', () => {
-        peer = p; isHost = true; solo = false; tvMode = false; myIdx = 0; roomCode = code;
-        players = [blankP(nick)]; G = freshG();
-        setConn(true, 'Room open'); lockLobby(false); pub();
+        tvPeer = p; tvCode = code; host = makeHost({ tv: true, code });
+        joinUrl = location.origin + location.pathname.replace(/index\.html$/, '') + '?r=' + code;
+        show('tv'); document.title = `找不同大賽 · ${code}`;
+        try { navigator.wakeLock?.request('screen').catch(() => {}); } catch {}
+        requestAnimationFrame(tvLoop);
       });
       p.on('connection', c => {
-        const meta = c.metadata || {};
-        if (meta.role === 'tv') {
-          c.on('open', () => { tvs.push(c); renderTvNote(); pub(); });
-          c.on('close', () => { tvs = tvs.filter(x => x !== c); renderTvNote(); });
-          c.on('error', () => {});
-          return;
-        }
-        // 比賽中拒絕新連線；在房間裡則以新連線取代舊的（對手重試連線時會發生）
-        const busy = G && !['room', 'over'].includes(G.phase);
-        if (!busy && conn) { const old = conn; conn = null; try { old.close(); } catch {} }
-        if (busy) { c.on('open', () => { try { c.send({ t: 'full' }); } catch {} setTimeout(() => c.close(), 500); }); return; }
-        c.on('open', () => {
-          conn = c; setConn(true, 'Connected');
-          players = [players[0], blankP(String(meta.nick || 'Opponent').slice(0, 10))];
-          players[0].ready = false; G.phase = 'room'; pub();
+        c.on('data', m => {
+          if (!m || typeof m !== 'object') return;
+          if (m.t === 'hi') { const P = host.join(m.pid, m.nick, c, false); if (P) c._pid = P.pid; return; }
+          const P = c._pid && host.players.get(c._pid); if (P && P.conn === c) host.onMsg(P, m);
         });
-        c.on('data', m => onHostData(c, m));
-        c.on('close', () => {
-          if (conn !== c) return;
-          conn = null; setConn(true, 'Opponent left');
-          if (G.phase === 'room' || G.phase === 'over') { players = [players[0]]; G.phase = 'room'; }
-          else if (players[1]) players[1].gone = true;
-          pub();
-        });
+        c.on('close', () => { const P = c._pid && host.players.get(c._pid); if (P && P.conn === c) host.leave(P); });
+        c.on('error', () => {});
       });
       p.on('error', e => {
-        if (e.type === 'unavailable-id' && attempt < 3) { p.destroy(); tryOpen(attempt + 1); return; }
-        if (!peer) { lockLobby(false); $('lobbyMsg').textContent = `Could not create a room (${e.type}). Please try again.`; p.destroy(); }
+        if (e.type === 'unavailable-id' && attempt < 4) { p.destroy(); tryOpen(attempt + 1); return; }
+        if (!tvPeer) { $('hostBtn').disabled = false; $('joinMsg').textContent = `開房失敗（${e.type}），請再試。 Could not create a room. Please try again.`; p.destroy(); }
       });
-      p.on('disconnected', () => { if (peer === p && !p.destroyed) { setConn(false, 'Reconnecting…'); p.reconnect(); } });
+      p.on('disconnected', () => { if (tvPeer === p && !p.destroyed) p.reconnect(); });
     };
     tryOpen(0);
-  };
-
-  function onHostData(c, m) {
-    if (c !== conn || !m || typeof m !== 'object') return;
-    if (m.t === 'rdy' && players[1]) { players[1].ready = !!m.v; pub(); maybeStart(); }
-    if (m.t === 'tap') judge(1, +m.lv, m.x, m.y);
+  }
+  window.addEventListener('beforeunload', e => { if (host && host.opt.tv && host.players.size) { e.preventDefault(); e.returnValue = ''; } });
+  document.addEventListener('keydown', e => {
+    if (!host || !host.opt.tv) return;
+    if ((e.key === ' ' || e.key === 'Enter' || e.key === 'ArrowRight') && document.activeElement.tagName !== 'BUTTON') { e.preventDefault(); tvAction(host.phase === 'lobby' ? 'start' : host.phase === 'final' ? 'again' : 'next'); }
+  });
+  function tvAction(a) {
+    if (a === 'start') host.start();
+    else if (a === 'next') host.next();
+    else if (a === 'pause') { host.paused = !host.paused; if (!host.paused) host.deadline = now() + 4000; }
+    else if (a === 'again') host.toLobby();
+    host.dirty = true;
   }
 
-  function connectAs(role) {
-    const nick = role === 'player' ? needNick() : '';
-    if ((role === 'player' && !nick) || typeof Peer === 'undefined') return;
-    const code = readCode();
-    if (code.length < 4) { $('lobbyMsg').textContent = 'Enter the 4-character room code.'; $('code').focus(); return; }
-    lockLobby(true); $('lobbyMsg').textContent = role === 'tv' ? 'Connecting the TV view…' : 'Connecting…';
-    if (role === 'tv') beep(1, .01, 'sine', .0001); // 用這次點擊解鎖電視的音效
-    const p = new Peer();
-    let opened = false;
-    const timer = setTimeout(() => { if (!opened) { $('lobbyMsg').textContent = 'Could not reach that room. Check the code, or ask your opponent to create a new room.'; lockLobby(false); p.destroy(); } }, 20000);
-    p.on('open', () => {
-      peer = p;
-      // 網絡慢時第一次連線可能卡住：6 秒未通就關掉重連，最多 3 次
-      const attempt = n => {
-      const c = p.connect(PREFIX + code.toLowerCase(), { reliable: true, metadata: { role, nick } });
-      const retry = setTimeout(() => {
-        if (opened || n >= 2) return;
-        try { c.close(); } catch {}
-        $('lobbyMsg').textContent = 'Still connecting, trying again…';
-        attempt(n + 1);
-      }, 6000);
-      c.on('open', () => {
-        clearTimeout(retry);
-        if (opened) { try { c.close(); } catch {} return; }
-        opened = true; clearTimeout(timer); lockLobby(false);
-        conn = c; isHost = false; solo = false; roomCode = code;
-        tvMode = role === 'tv'; myIdx = tvMode ? -1 : 1;
-        setConn(true, tvMode ? 'Watching' : 'Connected');
-        if (tvMode) enterTV(code);
-      });
-      c.on('data', m => { if (conn === c) onData(m); });
-      c.on('close', () => {
-        if (conn !== c) return;
-        conn = null; setConn(false, 'Host left');
-        if (tvMode) { $('banner').hidden = false; $('banner').innerHTML = 'The host left the room.<small>Refresh this page and enter the new room code.</small>'; return; }
-        S = null; show('lobby'); $('lobbyMsg').textContent = 'The host left the room. Create a new room or join another.';
-      });
-      };
-      attempt(0);
-    });
-    p.on('error', e => {
-      clearTimeout(timer); if (opened) return;
-      $('lobbyMsg').textContent = e.type === 'peer-unavailable' ? 'No room with that code. Check it and try again.' : `Connection failed (${e.type}). Please try again.`;
-      lockLobby(false); p.destroy(); peer = null;
-    });
-  }
-  $('joinBtn').onclick = () => connectAs('player');
-  $('tvBtn').onclick = () => connectAs('tv');
-
-  function onData(m) {
-    if (!m || typeof m !== 'object') return;
-    if (m.t === 'full') { $('lobbyMsg').textContent = 'That room is full or a match is in progress.'; leave(); return; }
-    if (m.t === 'st') applyState(m);
-    if (m.t === 'ev') onEv(m);
+  function qr(el, text, size) {
+    el.innerHTML = '';
+    if (typeof QRCode === 'undefined') { el.textContent = text; el.style.lineHeight = '1.4'; el.style.color = '#000'; return; }
+    new QRCode(el, { text, width: size, height: size, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
   }
 
-  function leave() {
-    try { conn?.close(); } catch {} tvs.forEach(c => { try { c.close(); } catch {} }); try { peer?.destroy(); } catch {}
-    conn = null; peer = null; players = []; tvs = []; G = null; S = null; isHost = false; solo = false; picKey = '';
-    renderTvNote(); setConn(false, 'Offline'); show('lobby');
-  }
-  $('leaveBtn').onclick = $('quitBtn').onclick = $('leave2Btn').onclick = leave;
-
-  $('soloBtn').onclick = () => {
-    const nick = $('nick').value.trim().slice(0, 10) || 'You';
-    isHost = true; solo = true; tvMode = false; myIdx = 0; roomCode = '';
-    players = [blankP(nick)]; G = freshG(); players[0].ready = true; maybeStart();
-  };
-
-  $('readyBtn').onclick = $('againBtn').onclick = () => {
-    if (isHost) { if (solo) { hostStart(); return; } players[0].ready = !players[0].ready; pub(); maybeStart(); }
-    else if (S && S.players[1]) send({ t: 'rdy', v: !S.players[1].ready });
-  };
-  function send(m) { try { if (conn && conn.open) conn.send(m); } catch {} }
-
-  // ================= 畫面 =================
-  function applyState(m) {
-    if (!m || !Array.isArray(m.players)) return;
-    m.lv = Math.max(0, Math.min(LV - 1, +m.lv || 0));
-    if (S && S.rid === m.rid && S.lv === m.lv && S.phase === 'play' && m.phase === 'between') { /* 回合結束 */ }
-    S = m; deadline = performance.now() + (+m.left || 0);
-    if (S.phase !== 'play') { myLockUntil = 0; }
-    render();
+  let lastCountShown = -1;
+  function tvLoop() {
+    requestAnimationFrame(tvLoop);
+    const H = host; if (!H) return;
+    const t = now();
+    // 計時與倒數每一格更新
+    const tm = $('tvTm'); if (tm) { const s = Math.max(0, Math.ceil((H.deadline - t) / 1000)); tm.textContent = H.phase === 'reveal' && H.paused ? '❚❚' : s; tm.classList.toggle('low', H.phase === 'play' && s <= 10); }
+    if (H.phase === 'count') { const n = Math.max(1, Math.ceil((H.deadline - t) / 1000)); const el = $('tvNum'); if (el) el.textContent = n; if (n !== lastCountShown) { lastCountShown = n; beep(660, .12, 'sine', .06); } } else lastCountShown = -1;
+    const key = H.phase + ':' + H.lv + ':' + H.rid;
+    if (key !== tvLast.key) { tvLast.key = key; buildTV(); H.dirty = true; }
+    if (H.dirty) { H.dirty = false; updateTV(); }
   }
 
-  function render() {
-    if (!S) return;
-    if (tvMode) { show('game'); renderGame(); return; }
-    if (S.phase === 'room') { show('room'); renderRoom(); }
-    else if (S.phase === 'over') { show('result'); renderResult(); }
-    else { show('game'); renderGame(); }
-  }
-
-  const pname = i => (S.players[i] && S.players[i].nick) || (i ? 'Player 2' : 'Player 1');
-
-  function renderRoom() {
-    $('roomCode').textContent = roomCode;
-    $('players').innerHTML = [0, 1].map(i => {
-      const p = S.players[i];
-      if (!p) return `<div class="pl"><span class="sw" style="background:${COLS[i]}"></span><span class="nm" style="color:var(--muted)">Waiting for a player…</span><span></span></div>`;
-      return `<div class="pl"><span class="sw" style="background:${COLS[i]}"></span><span class="nm">${esc(p.nick)}${i === myIdx ? '<em>you</em>' : ''}</span>${p.ready ? '<span class="pill ready">Ready</span>' : '<span class="pill">Not ready</span>'}</div>`;
-    }).join('');
-    const me = S.players[myIdx];
-    $('readyBtn').textContent = me && me.ready ? 'Cancel ready' : 'I’m ready';
-    const two = S.players.length === 2 && S.players.every(Boolean);
-    $('readyBtn').disabled = !two;
-    $('roomMsg').textContent = !two ? 'Share the room code above and wait for your opponent…' : 'The countdown starts when both players tap “I’m ready”.';
-  }
-
-  let picKey = '', picSel = [], drawn = new Set(), revealed = false;
-  function ensurePics() {
-    if (!S.rid) { if (picKey) { $('picA').innerHTML = $('picB').innerHTML = ''; picKey = ''; } return; }
-    const key = S.rid + ':' + S.lv;
-    if (key === picKey) return;
-    picKey = key; drawn = new Set(); revealed = false;
-    const sc = SCENES[S.lv]; picSel = pickDiffs(S.seed, S.lv);
-    const svg = right => `<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${esc(sc.name)}${right ? ' (changed)' : ' (original)'}">${sc.draw(id => right && picSel.includes(id))}<g class="marks"></g><g class="fx"></g></svg>`;
-    $('picA').innerHTML = svg(false); $('picB').innerHTML = svg(true);
-  }
-  const svgs = () => [$('picA').querySelector('svg'), $('picB').querySelector('svg')].filter(Boolean);
-  function addMark(d, who) {
-    const r = Math.max(d.r, 12) + 3;
-    const html = who < 0
-      ? `<g class="rv"><circle cx="${d.x}" cy="${d.y}" r="${r}" fill="none" stroke="#1d1a16" stroke-width="8"/><circle cx="${d.x}" cy="${d.y}" r="${r}" fill="none" stroke="#ffd43b" stroke-width="4" stroke-dasharray="6 5"/></g>`
-      : `<g class="mk"><circle cx="${d.x}" cy="${d.y}" r="${r}" fill="none" stroke="#fff" stroke-width="10"/><circle cx="${d.x}" cy="${d.y}" r="${r}" fill="none" style="stroke:${COLS[who]}" stroke-width="5"/></g>`;
-    svgs().forEach(s => s.querySelector('.marks').insertAdjacentHTML('beforeend', html));
-  }
-  function renderMarks() {
-    if (!S.rid) return;
-    const D = SCENES[S.lv].diffs;
-    S.found.forEach(f => { if (drawn.has(f.k) || !picSel[f.k] && picSel[f.k] !== 0) return; drawn.add(f.k); addMark(D[picSel[f.k]], f.who); });
-    if (S.phase === 'between' && S.timeout && !revealed) {
-      revealed = true;
-      picSel.forEach((id, k) => { if (!S.found.some(f => f.k === k)) addMark(D[id], -1); });
+  function buildTV() {
+    const H = host, b = $('tvBody');
+    $('tvJoinMini').innerHTML = H.phase === 'lobby' ? '' : `<div>${bi('手機加入', 'Join on your phone')}<br><b>${esc(tvCode)}</b></div><div class="tv-mini-qr" id="miniQr"></div>`;
+    if (H.phase !== 'lobby') qr($('miniQr'), joinUrl, 128);
+    if (H.phase === 'lobby') {
+      b.innerHTML = `<div class="tv-lobby">
+        <div class="qrbox" id="bigQr"></div>
+        <div class="lobby-info">
+          <div class="step">1. 用手機相機掃描 QR code<span class="en">Scan the QR code with your phone camera</span></div>
+          <div class="hint" style="font-size:1em">或打開 or open <span class="url">${esc(joinUrl.replace(/^https?:\/\//, '').replace(/\?r=.*/, ''))}</span>，房號 room code</div>
+          <div class="code">${esc(tvCode)}</div>
+          <div class="step" style="font-size:1.2em">2. 輸入名字，按加入<span class="en">Enter your name and tap Join</span></div>
+          <h3 style="margin:1vh 0 0" id="tvCount"></h3>
+          <div class="chips" id="tvChips"></div>
+          <div class="tv-btns"><button class="primary" id="tvStart">開始遊戲<span class="en">Start game</span></button></div>
+          <div class="credit">相片 Photos: Wikimedia Commons，CC BY-SA，經修改 edited</div>
+        </div></div>`;
+      qr($('bigQr'), joinUrl, 512);
+      $('tvStart').onclick = () => tvAction('start');
+      return;
+    }
+    if (H.phase === 'final') {
+      b.innerHTML = `<div style="display:grid;grid-template-columns:1fr 30vw;gap:2vw;flex:1;min-height:0">
+        <div style="display:flex;flex-direction:column;justify-content:center;gap:3vh"><h2 style="margin:0;text-align:center;font-size:2.4em">${bi('冠軍出爐！', 'And the winner is…')}</h2><div class="podium" id="tvPodium"></div>
+        <div class="tv-btns" style="justify-content:center"><button class="primary" id="tvAgain">再玩一次<span class="en">Play again</span></button></div></div>
+        <div class="tv-right"><h3>${bi('總排名', 'Final standings')}</h3><div class="lb" id="tvLb"></div></div></div>`;
+      $('tvAgain').onclick = () => tvAction('again');
+      return;
+    }
+    const sel = pickDiffs(H.seed, H.lv);
+    b.innerHTML = `<div class="tv-main">
+      <div class="tv-left">
+        <div class="tv-head"><div class="lvn"><small>${bi(`第 ${H.lv + 1} / ${LV} 關`, `Round ${H.lv + 1} of ${LV}`)}</small>${lvTitle(H.lv)}</div><div class="tm" id="tvTm"></div></div>
+        <div class="tv-pics"><figure class="pic"><figcaption>A</figcaption><div class="svgbox">${picSVG(H.lv, sel, false)}</div></figure><figure class="pic"><figcaption>B</figcaption><div class="svgbox">${picSVG(H.lv, sel, true)}</div></figure></div>
+        <div class="tv-sub" id="tvSub"></div>
+      </div>
+      <div class="tv-right" id="tvRight"></div>
+    </div>
+    ${H.phase === 'count' ? `<div class="tv-count"><div><div class="t">${bi(`第 ${H.lv + 1} 關`, `Round ${H.lv + 1}`)}</div><div class="num" id="tvNum">3</div><div class="t">${lvTitle(H.lv)}</div></div></div>` : ''}`;
+    if (H.phase === 'reveal') {
+      document.querySelectorAll('#tvBody .marks').forEach(g => { g.innerHTML = sel.map(i => markHTML(DIFFS[H.lv][i], 'hit')).join(''); });
     }
   }
 
-  function renderGame() {
-    const solo1 = S.solo || S.players.length < 2;
-    const live = !!S.rid && S.phase !== 'room';
-    $('pc1').hidden = solo1 && !tvMode;
-    [0, 1].forEach(i => {
-      const p = S.players[i];
-      $('n' + i).textContent = p ? p.nick + (p.gone ? ' (left)' : '') : (tvMode ? 'Waiting…' : '');
-      $('s' + i).textContent = live ? (S.scores[i] || 0) : 0;
-      $('pc' + i).classList.toggle('me', i === myIdx && !solo1);
+  function dotsHTML(n, total = PICK) { return `<span class="dots">${Array.from({ length: total }, (_, i) => `<i class="${i < n ? 'on' : ''}"></i>`).join('')}</span>`; }
+
+  function updateTV() {
+    const H = host, ps = [...H.players.values()];
+    if (H.phase === 'lobby') {
+      const on = ps.filter(p => p.online);
+      $('tvCount').innerHTML = bi(`已加入 ${on.length} 人`, `${on.length} joined`);
+      $('tvChips').innerHTML = on.map(p => `<span>${esc(p.nick)}</span>`).join('');
+      $('tvStart').disabled = !on.length;
+      return;
+    }
+    if (H.phase === 'final') {
+      const rk = H.ranked(); const medal = ['🥇', '🥈', '🥉'];
+      const order = [1, 0, 2].filter(i => rk[i]);
+      $('tvPodium').innerHTML = order.map(i => `<div class="p ${i === 0 ? 'first' : ''}"><div class="medal">${medal[i]}</div><div class="n">${esc(rk[i].nick)}</div><div class="s">${rk[i].score}</div></div>`).join('');
+      $('tvLb').innerHTML = rk.slice(0, 15).map((p, i) => `<div class="row"><b>${i + 1}</b><span class="n">${esc(p.nick)}</span><span class="v">${p.score}</span></div>`).join('') + (rk.length > 15 ? `<div class="more">${bi(`還有 ${rk.length - 15} 人`, `+${rk.length - 15} more`)}</div>` : '');
+      return;
+    }
+    const inLv = ps.filter(p => p.cur && p.cur.rid === H.rid && p.cur.lv === H.lv);
+    const doneN = inLv.filter(p => p.cur.done).length;
+    if (H.phase === 'play' || H.phase === 'count') {
+      $('tvSub').innerHTML = `<span>${bi('用手機找出 3 個不同', 'Find the 3 differences on your phone')}</span><span>${bi('完成', 'Finished')} <b>${doneN} / ${inLv.length || ps.length}</b></span>`;
+      const live = inLv.slice().sort((a, b) => b.cur.found.length - a.cur.found.length || (a.cur.done && b.cur.done ? a.cur.doneT - b.cur.doneT : (a.cur.lastT ?? 1e9) - (b.cur.lastT ?? 1e9)));
+      const fast = inLv.filter(p => p.cur.done).sort((a, b) => a.cur.doneT - b.cur.doneT).slice(0, 5);
+      const maxRows = 10;
+      $('tvRight').innerHTML = `<h3>${bi('最快完成', 'Fastest')}</h3><div class="fast">${fast.length ? fast.map((p, i) => `<div class="f"><span>${['🥇', '🥈', '🥉', '4.', '5.'][i]} ${esc(p.nick)}</span><span>${sec(p.cur.doneT)}</span></div>`).join('') : `<div class="hint">${bi('未有人完成', 'Nobody yet')}</div>`}</div>
+        <h3 style="margin-top:1vh">${bi('即時進度', 'Live progress')}</h3>
+        <div class="lb">${live.slice(0, maxRows).map((p, i) => `<div class="row ${p.cur.done ? 'done' : ''}"><b>${i + 1}</b><span class="n">${esc(p.nick)}${p.online ? '' : ' ⚠'}</span>${dotsHTML(p.cur.found.length)}</div>`).join('')}
+        ${live.length > maxRows ? `<div class="more">${bi(`還有 ${live.length - maxRows} 人`, `+${live.length - maxRows} more`)}</div>` : ''}</div>`;
+      return;
+    }
+    if (H.phase === 'reveal') {
+      const lvRk = ps.filter(p => p.last && p.last.rid === H.rid && p.last.lv === H.lv).sort((a, b) => a.last.rank - b.last.rank);
+      const rk = H.ranked(); const last = H.lv + 1 >= LV;
+      $('tvSub').innerHTML = `<span>${bi('答案：3 個不同', 'Answer: the 3 differences')}</span><span>${H.paused ? bi('已暫停', 'Paused') : bi(last ? '即將公佈結果' : '下一關即將開始', last ? 'Final results next' : 'Next round soon')}</span>`;
+      $('tvRight').innerHTML = `<h3>${bi('本關最快', 'This round')}</h3><div class="lb">${lvRk.slice(0, 5).map(p => `<div class="row"><b>${p.last.rank}</b><span class="n">${esc(p.nick)}</span><span class="v">+${p.last.pts}</span></div>`).join('')}</div>
+        <h3 style="margin-top:1vh">${bi('總排名', 'Leaderboard')}</h3><div class="lb">${rk.slice(0, 8).map((p, i) => `<div class="row"><b>${i + 1}</b><span class="n">${esc(p.nick)}</span><span class="v">${p.score}</span></div>`).join('')}</div>
+        <div class="tv-btns" style="margin-top:auto"><button class="primary" id="tvNext">${last ? bi('看結果', 'Results') : bi('下一關', 'Next round')} ▶</button><button id="tvPause">${H.paused ? bi('繼續', 'Resume') : bi('暫停', 'Pause')}</button></div>`;
+      $('tvNext').onclick = () => tvAction('next'); $('tvPause').onclick = () => tvAction('pause');
+    }
+  }
+
+  // ================= 玩家（手機） =================
+  const client = { st: null, me: null, found: new Set(), key: '', lockUntil: 0, misses: 0, deadline: 0 };
+  let pPeer = null, pConn = null, pCode = '', role = null, leaving = false, retries = 0, retryTimer = 0;
+
+  function show(id) {
+    ['join', 'wait', 'game', 'final', 'tv'].forEach(k => $(k).hidden = k !== id);
+    $('game').classList.toggle('wide', id === 'game');
+  }
+
+  function joinGame() {
+    const nick = $('nick').value.trim().slice(0, 12);
+    if (!nick) { $('joinMsg').textContent = '請先輸入名字。 Please enter your name.'; $('nick').focus(); return; }
+    const code = $('code').value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (code.length < 4) { $('joinMsg').textContent = '請輸入電視上的 4 位房號。 Enter the 4-character code shown on the TV.'; $('code').focus(); return; }
+    if (typeof Peer === 'undefined') { $('joinMsg').textContent = '連線模組載入失敗，請重新整理。 Could not load the network module. Please refresh.'; return; }
+    store('sd-nick', nick); pCode = code; role = 'player'; leaving = false; retries = 0;
+    $('joinBtn').disabled = true; $('joinMsg').textContent = '連線中… Connecting…';
+    preload();
+    connectPlayer(true);
+  }
+
+  // 連線（會自動重試；手機鎖屏後回來也會重新連上）
+  function connectPlayer(first) {
+    clearTimeout(retryTimer);
+    try { pConn && pConn.close(); } catch {}
+    try { pPeer && pPeer.destroy(); } catch {}
+    pConn = null;
+    const p = new Peer(); pPeer = p;
+    let opened = false;
+    const giveUp = setTimeout(() => { if (!opened) fail('timeout'); }, 9000);
+    const fail = why => {
+      clearTimeout(giveUp); if (opened || leaving || pPeer !== p) return;
+      try { p.destroy(); } catch {}
+      if (first && why === 'peer-unavailable') { $('joinBtn').disabled = false; $('joinMsg').textContent = '找不到這個房號，請看清楚電視上的房號。 No room with that code. Check the code on the TV.'; role = null; return; }
+      retries++;
+      if (first && retries >= 3) { $('joinBtn').disabled = false; $('joinMsg').textContent = '連不上，請檢查網絡或房號。 Could not connect. Check your network and the code.'; role = null; return; }
+      showConnBad(true);
+      retryTimer = setTimeout(() => connectPlayer(first), Math.min(1000 * retries, 4000));
+    };
+    p.on('open', () => {
+      const c = p.connect(PREFIX + pCode.toLowerCase(), { reliable: true });
+      c.on('open', () => {
+        opened = true; clearTimeout(giveUp); pConn = c; retries = 0; first = false;
+        c.send({ t: 'hi', pid: myPid, nick: store('sd-nick') || $('nick').value.trim() });
+        showConnBad(false); $('joinBtn').disabled = false; $('joinMsg').textContent = '';
+      });
+      c.on('data', m => { if (pConn === c) client.onMsg(m); });
+      c.on('close', () => { if (pConn !== c || leaving) return; pConn = null; showConnBad(true); retryTimer = setTimeout(() => connectPlayer(false), 800); });
     });
-    const sc = SCENES[S.lv];
-    $('lvl').textContent = live ? `Level ${S.lv + 1} / ${LV}` : '';
-    $('lvName').textContent = live ? `${sc.name} · ${sc.sub}` : '';
-    $('dots').innerHTML = !live ? '' : Array.from({ length: PICK }, (_, k) => { const f = S.found.find(x => x.k === k); return `<i style="${f ? `background:${COLS[f.who]};border-color:${COLS[f.who]}` : ''}"></i>`; }).join('');
-    ensurePics(); renderMarks();
+    p.on('error', e => fail(e.type));
+  }
+  function showConnBad(on) {
+    const t = bi('連線中斷，重新連線中…', 'Connection lost, reconnecting…');
+    ['connBad1', 'connBad2'].forEach(id => { $(id).hidden = !on || !client.st; $(id).innerHTML = t; });
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && role === 'player' && !leaving && !(pConn && pConn.open)) connectPlayer(false);
+  });
+  function upSend(m) {
+    if (role === 'solo') { const P = host && host.players.get(myPid); setTimeout(() => host.onMsg(P, m), 0); return; }
+    try { if (pConn && pConn.open) pConn.send(m); } catch {}
+  }
+  function leaveGame() {
+    leaving = true; clearTimeout(retryTimer);
+    try { pConn && pConn.close(); } catch {} try { pPeer && pPeer.destroy(); } catch {}
+    pConn = pPeer = null; role = null; client.st = client.me = null; client.key = '';
+    if (host && host.opt.solo) { clearInterval(host.iv); host = null; }
+    show('join');
+  }
 
-    // 關與關之間的橫幅
-    const b = $('banner');
-    if (S.phase === 'between') {
-      const h = S.hist[S.lv] || [0, 0], last = S.lv + 1 >= LV;
-      const parts = solo1 ? `Found ${h[0]} / ${PICK}` : `<span style="color:var(--p1)">${esc(pname(0))} +${h[0]}</span> &nbsp; <span style="color:var(--p2)">${esc(pname(1))} +${h[1]}</span>`;
-      b.innerHTML = `${S.timeout ? 'Time’s up! Yellow circles were missed.' : `Level ${S.lv + 1} cleared!`} &nbsp; ${parts}<small>${last ? 'Final results coming up…' : `Next: ${esc(SCENES[S.lv + 1].name)}`}</small>`;
-      b.hidden = false;
+  client.onMsg = m => {
+    if (!m || typeof m !== 'object') return;
+    if (m.t === 'full') { leaving = true; $('joinMsg').textContent = '房間已滿。 The room is full.'; leaveGame(); return; }
+    if (m.t === 'st') {
+      client.st = m; client.deadline = now() + (+m.left || 0);
+      const key = m.rid + ':' + m.lv;
+      if (key !== client.key) { client.key = key; client.found = new Set(); client.lockUntil = 0; client.misses = 0; client.picKey = ''; }
+      renderClient();
+    } else if (m.t === 'me') {
+      client.me = m;
+      if (client.st && m.found) m.found.forEach(k => client.found.add(k));
+      renderClient();
+    }
+  };
+
+  function ensurePics() {
+    const s = client.st; const key = s.rid + ':' + s.lv;
+    if (client.picKey === key) return;
+    client.picKey = key; client.sel = pickDiffs(s.seed, s.lv);
+    $('picA').innerHTML = picSVG(s.lv, client.sel, false); $('picB').innerHTML = picSVG(s.lv, client.sel, true);
+    client.drawn = new Set(); client.revealed = false;
+  }
+  const mySvgs = () => [$('picA').querySelector('svg'), $('picB').querySelector('svg')].filter(Boolean);
+  function drawMarks() {
+    const s = client.st, D = DIFFS[s.lv];
+    client.found.forEach(k => { if (client.drawn.has(k)) return; client.drawn.add(k); mySvgs().forEach(v => v.querySelector('.marks').insertAdjacentHTML('beforeend', markHTML(D[client.sel[k]], 'hit'))); });
+    if (s.phase === 'reveal' && !client.revealed) {
+      client.revealed = true;
+      client.sel.forEach((id, k) => { if (!client.found.has(k)) mySvgs().forEach(v => v.querySelector('.marks').insertAdjacentHTML('beforeend', markHTML(D[id], 'miss'))); });
+    }
+  }
+
+  function renderClient() {
+    const s = client.st, me = client.me; if (!s) return;
+    $('soloAgain').hidden = role !== 'solo';
+    if (s.phase === 'lobby') {
+      show('wait');
+      $('waitName').textContent = store('sd-nick') || '';
+      $('waitTxt').innerHTML = bi(`等主持開始…（已有 ${s.n} 人）`, `Waiting for the host to start… (${s.n} joined)`);
+      preload((d, t) => { $('loadTxt').innerHTML = d < t ? bi(`載入圖片 ${d}/${t}`, `Loading pictures ${d}/${t}`) : bi('圖片已準備好', 'Pictures ready'); });
+      return;
+    }
+    if (s.phase === 'final') {
+      show('final');
+      $('fRank').textContent = me ? `${me.rank}/${me.of}` : '-';
+      $('fScore').textContent = me ? me.score : 0;
+      $('fTop').innerHTML = me ? me.top.map((t, i) => `<div class="rk top${i + 1}"><b>${['🥇', '🥈', '🥉'][i]}</b><span class="n">${esc(t[0])}</span><span class="s">${t[1]}</span></div>`).join('') : '';
+      $('fMsg').innerHTML = role === 'solo' ? bi('練習完成！', 'Practice complete!') : bi('多謝參與！看電視看頒獎。', 'Thanks for playing! Check the TV for the podium.');
+      return;
+    }
+    show('game'); ensurePics();
+    $('gLv').innerHTML = bi(`第 ${s.lv + 1} / ${LV} 關`, `Round ${s.lv + 1} of ${LV}`);
+    $('gName').innerHTML = lvTitle(s.lv);
+    const ov = $('gOv'), b = $('gBanner');
+    if (s.phase === 'count') { ov.hidden = false; ov.innerHTML = `<div><div class="t">${lvTitle(s.lv)}</div><div class="num" id="gNum">3</div><div class="hint">${bi('準備！', 'Get ready!')}</div></div>`; }
+    else ov.hidden = true;
+    const n = client.found.size;
+    $('gDots').innerHTML = Array.from({ length: PICK }, (_, k) => `<i class="${client.found.has(k) ? 'on' : (s.phase === 'reveal' ? 'miss' : '')}"></i>`).join('');
+    $('gMiss').innerHTML = client.misses ? bi(`點錯 ${client.misses}`, `${client.misses} misses`) : '';
+    drawMarks();
+    if (s.phase === 'play' && n >= PICK) {
+      b.hidden = false; b.className = 'banner done';
+      b.innerHTML = `${bi('完成！', 'Done!')} ${me && me.doneT != null ? sec(me.doneT) : ''}<span class="sub">${bi('等其他人完成，看電視排名', 'Waiting for others — check the TV')}</span>`;
+    } else if (s.phase === 'reveal') {
+      const L = me && me.last;
+      b.hidden = false; b.className = 'banner';
+      b.innerHTML = L ? `${bi(`本關 +${L.pts} 分 · 第 ${L.rank} 名`, `Round +${L.pts} · #${L.rank}`)}<span class="sub">${bi(`總分 ${me.score} · 總排名 ${me.rank}/${me.of}`, `Total ${me.score} · Rank ${me.rank}/${me.of}`)}</span>`
+        : bi('答案已公佈', 'Answers revealed');
     } else b.hidden = true;
-
-    // 覆蓋層：倒數、電視的等待與結果
-    const ov = $('ov');
-    if (S.phase === 'count') { ov.hidden = false; ov.innerHTML = `<div><div class="big" id="ovNum">3</div><div class="sub">Get ready! Level 1: ${esc(SCENES[0].name)}</div></div>`; }
-    else if (tvMode && S.phase === 'room') {
-      ov.hidden = false;
-      const ps = [0, 1].map(i => { const p = S.players[i]; return `<span style="color:${COLS[i]}">${p ? esc(p.nick) + (p.ready ? ' ✓' : '') : 'Waiting…'}</span>`; }).join('');
-      ov.innerHTML = `<div class="tvov"><h3>Meme Spot Duel · Waiting to start</h3><p>Open <b>${esc(location.host + location.pathname.replace(/index\.html$/, ''))}</b> on your phone and join room <b>${esc(roomCode)}</b></p><p>The match starts when both players tap “I’m ready”</p><div class="who">${ps}</div></div>`;
-    } else if (tvMode && S.phase === 'over') {
-      ov.hidden = false; ov.innerHTML = `<div class="tvov">${resultHTML(true)}</div>`;
-    } else ov.hidden = true;
-
-    const canTap = !tvMode && S.phase === 'play';
-    $('gameHint').textContent = canTap ? 'Tap either picture. A miss freezes you for 3 s.' : '';
+    $('gHint').innerHTML = s.phase === 'play' ? bi('兩張圖都可以點。點錯凍結 3 秒。', 'Tap either picture. A miss freezes you for 3 s.') : s.phase === 'reveal' ? bi('綠圈＝你找到，黃圈＝未找到', 'Green = found, yellow = missed') : '';
   }
 
-  function winner() {
-    const s = S.scores, m = S.miss;
-    if (s[0] !== s[1]) return s[0] > s[1] ? 0 : 1;
-    if (m[0] !== m[1]) return m[0] < m[1] ? 0 : 1;
-    return -1;
-  }
-  function resultHTML(tv) {
-    const two = !S.solo && S.players.length === 2;
-    if (!two) return `<h3>Practice done: ${S.scores[0]} / ${LV * PICK}</h3><p>${S.miss[0]} misses</p>`;
-    const w = winner();
-    const title = w < 0 ? 'It’s a tie!' : `${esc(pname(w))} wins!`;
-    const tie = w >= 0 && S.scores[0] === S.scores[1] ? '(Tied on points, fewer misses wins)' : '';
-    return `<h3>${title}</h3><p>${tie}</p><div class="who">${[0, 1].map(i => `<span style="color:${COLS[i]}">${esc(pname(i))} ${S.scores[i]} pts · ${S.miss[i]} misses</span>`).join('')}</div>`;
-  }
-  function renderResult() {
-    const two = !S.solo && S.players.length === 2;
-    const w = two ? winner() : -2;
-    $('resTitle').textContent = !two ? 'Practice complete!' : w < 0 ? 'It’s a tie!' : w === myIdx ? 'You win! 🎉' : `${pname(w)} wins`;
-    const idx = two ? [0, 1].sort((a, b) => (S.scores[b] - S.scores[a]) || (S.miss[a] - S.miss[b])) : [0];
-    $('resList').innerHTML = idx.map((i, n) => `<div class="rank"><b style="color:${COLS[i]}">${two ? n + 1 : '—'}</b><span>${esc(pname(i))}${i === myIdx && two ? ' (you)' : ''} · ${S.miss[i]} misses${S.players[i] && S.players[i].gone ? ' · left' : ''}</span><span class="t" style="color:${COLS[i]}">${S.scores[i]}</span></div>`).join('');
-    $('hist').innerHTML = `<tr><th>Level</th>${(two ? [0, 1] : [0]).map(i => `<th style="color:${COLS[i]}">${esc(pname(i))}</th>`).join('')}</tr>` +
-      SCENES.map((sc, l) => { const h = S.hist[l] || [0, 0]; return `<tr><td>${l + 1}. ${esc(sc.name)}</td>${(two ? [0, 1] : [0]).map(i => `<td class="${two && h[i] > h[1 - i] ? 'w' : ''}">${h[i]}</td>`).join('')}</tr>`; }).join('');
-    const me = S.players[myIdx];
-    const opGone = two && S.players.some(p => p && p.gone);
-    $('againBtn').textContent = solo ? 'Practice again' : me && me.ready ? 'Cancel ready' : 'Play again';
-    $('againBtn').disabled = opGone;
-    $('resMsg').textContent = solo ? `${PICK} differences per level, ${LV * PICK} in total.` : opGone ? 'Your opponent left. Stay in the room to wait for a new opponent.' : (S.players[1 - myIdx] && S.players[1 - myIdx].ready ? 'Your opponent wants a rematch!' : 'A new match starts when both players tap “Play again”.');
-  }
-
-  // ================= 點擊與動畫 =================
+  // 點擊判斷（在手機上即時判斷，再通知主持）
   function svgPoint(svg, e) { const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY; return pt.matrixTransform(svg.getScreenCTM().inverse()); }
   ['picA', 'picB'].forEach(id => $(id).addEventListener('pointerdown', e => {
-    if (tvMode || !S || S.phase !== 'play' || myIdx < 0) return;
+    const s = client.st; if (!s || s.phase !== 'play' || client.found.size >= PICK) return;
     const svg = $(id).querySelector('svg'); if (!svg) return;
     e.preventDefault();
-    if (performance.now() < myLockUntil) return;
-    const p = svgPoint(svg, e);
-    if (p.x < 0 || p.y < 0 || p.x > 400 || p.y > 300) return;
-    if (isHost) judge(0, S.lv, p.x, p.y);
-    else { send({ t: 'tap', lv: S.lv, x: Math.round(p.x), y: Math.round(p.y) }); fx(p.x, p.y, 'tap', 1); }
+    if (now() < client.lockUntil) return;
+    const p = svgPoint(svg, e); if (p.x < 0 || p.y < 0 || p.x > 400 || p.y > 300) return;
+    const D = DIFFS[s.lv]; let best = -1, bs = 1e9, onFound = false;
+    client.sel.forEach((idx, k) => {
+      const d = D[idx], score = Math.hypot(d.x - p.x, d.y - p.y) / (d.r + TOL);
+      if (score > 1) return;
+      if (client.found.has(k)) { onFound = true; return; }
+      if (score < bs) { bs = score; best = k; }
+    });
+    if (best >= 0) {
+      client.found.add(best); upSend({ t: 'find', rid: s.rid, lv: s.lv, k: best });
+      fx(p.x, p.y, 'ok'); try { navigator.vibrate?.(30); } catch {}
+      renderClient();
+    } else if (!onFound) {
+      client.lockUntil = now() + LOCK_MS; client.misses++; upSend({ t: 'miss', rid: s.rid, lv: s.lv });
+      fx(p.x, p.y, 'miss');
+      const st = $('stage'); st.classList.remove('shake'); void st.offsetWidth; st.classList.add('shake');
+      try { navigator.vibrate?.(150); } catch {}
+      renderClient();
+    }
   }));
-
-  function fx(x, y, kind, who) {
-    svgs().forEach(s => {
+  function fx(x, y, kind) {
+    mySvgs().forEach(s => {
       const g = s.querySelector('.fx'); if (!g) return;
-      let html;
-      if (kind === 'ok') html = `<circle class="pulse" cx="${x}" cy="${y}" r="22" fill="none" style="stroke:${COLS[who]}" stroke-width="6"/>`;
-      else if (kind === 'tap') html = `<circle class="pulse" cx="${x}" cy="${y}" r="10" fill="none" stroke="#1d1a16" stroke-width="2" opacity=".5"/>`;
-      else html = `<g class="xm"><path d="M${x - 11},${y - 11} L${x + 11},${y + 11} M${x + 11},${y - 11} L${x - 11},${y + 11}" stroke="#fff" stroke-width="9" stroke-linecap="round"/><path d="M${x - 11},${y - 11} L${x + 11},${y + 11} M${x + 11},${y - 11} L${x - 11},${y + 11}" style="stroke:${COLS[who]}" stroke-width="5" stroke-linecap="round"/></g>`;
-      g.insertAdjacentHTML('beforeend', html);
-      const el = g.lastElementChild; setTimeout(() => el.remove(), 1200);
+      g.insertAdjacentHTML('beforeend', kind === 'ok'
+        ? `<circle class="pulse" cx="${x}" cy="${y}" r="22" fill="none" stroke="#3ddc97" stroke-width="5"/>`
+        : `<g class="xm"><path d="M${x - 10},${y - 10} L${x + 10},${y + 10} M${x + 10},${y - 10} L${x - 10},${y + 10}" stroke="#000" stroke-width="8" stroke-linecap="round" opacity=".5"/><path d="M${x - 10},${y - 10} L${x + 10},${y + 10} M${x + 10},${y - 10} L${x - 10},${y + 10}" stroke="#ff5d5d" stroke-width="4" stroke-linecap="round"/></g>`);
+      const el = g.lastElementChild; setTimeout(() => el.remove(), 1100);
     });
   }
 
-  function onEv(m) {
-    if (!S || m.lv !== S.lv || (m.who !== 0 && m.who !== 1)) return;
-    const x = +m.x, y = +m.y;
-    if (m.ok) { fx(x, y, 'ok', m.who); sndOk(); }
-    else {
-      fx(x, y, 'miss', m.who); sndMiss();
-      if (m.who === myIdx) {
-        myLockUntil = performance.now() + LOCK_MS;
-        const st = $('stage'); st.classList.remove('shake'); void st.offsetWidth; st.classList.add('shake');
-        try { navigator.vibrate?.(120); } catch {}
-      }
-    }
-  }
-
-  // 每一格畫面更新：計時、倒數、凍結提示
-  function tick() {
-    requestAnimationFrame(tick);
-    if (!S || screen !== 'game') return;
-    const now = performance.now(), left = Math.max(0, deadline - now);
-    const tm = $('tm');
-    if (S.phase === 'play') { const s = Math.ceil(left / 1000); tm.textContent = s; tm.classList.toggle('low', s <= 10); }
-    else if (S.phase === 'between') { tm.textContent = '✓'; tm.classList.remove('low'); }
-    else { tm.textContent = S.phase === 'count' ? '…' : '--'; tm.classList.remove('low'); }
-    const n = $('ovNum'); if (n && S.phase === 'count') n.textContent = Math.max(1, Math.ceil(left / 1000));
-    const locked = S.phase === 'play' && now < myLockUntil;
+  // 手機每一格更新：計時、倒數、凍結
+  (function loop() {
+    requestAnimationFrame(loop);
+    const s = client.st; if (!s || $('game').hidden) return;
+    const t = now(), left = Math.max(0, client.deadline - t);
+    const tm = $('gTm');
+    if (s.phase === 'play') { const v = Math.ceil(left / 1000); tm.textContent = v; tm.classList.toggle('low', v <= 10); }
+    else { tm.textContent = s.phase === 'reveal' ? '✓' : ''; tm.classList.remove('low'); }
+    const n = $('gNum'); if (n && s.phase === 'count') n.textContent = Math.max(1, Math.ceil(left / 1000));
+    const locked = s.phase === 'play' && t < client.lockUntil;
     $('lockov').hidden = !locked;
-    if (locked) $('lockTxt').textContent = `Miss! Frozen ${((myLockUntil - now) / 1000).toFixed(1)} s`;
-  }
-  requestAnimationFrame(tick);
+    if (locked) $('lockTxt').innerHTML = bi(`點錯！凍結 ${((client.lockUntil - t) / 1000).toFixed(1)} 秒`, `Miss! Frozen ${((client.lockUntil - t) / 1000).toFixed(1)} s`).replace('<span class="en">', '<br><span class="en">');
+  })();
 
-  // ================= 電視觀戰 =================
-  function enterTV(code) {
-    document.body.classList.add('tv');
-    $('tvUrl').textContent = location.host + location.pathname.replace(/index\.html$/, '');
-    $('tvCode').textContent = code;
-    try { navigator.wakeLock?.request('screen').catch(() => {}); } catch {}
-    show('game');
+  // ================= 自己練習 =================
+  function startSolo() {
+    role = 'solo'; leaving = false;
+    const nick = $('nick').value.trim().slice(0, 12) || 'Me'; store('sd-nick', nick);
+    if (host && host.opt.solo) clearInterval(host.iv);
+    host = makeHost({ solo: true });
+    preload();
+    host.join(myPid, nick, null, true);
+    host.start();
   }
 
-  // 方便測試：網址加 #preview=關卡號 可直接看某關的兩張圖與差異位置
+  // ================= 啟動 =================
+  $('joinBtn').onclick = joinGame;
+  $('soloBtn').onclick = startSolo;
+  $('soloAgain').onclick = startSolo;
+  $('hostBtn').onclick = startTV;
+  $('leaveBtn').onclick = $('leave2Btn').onclick = leaveGame;
+  $('nick').value = store('sd-nick') || '';
+  const qs = new URLSearchParams(location.search);
+  if (qs.get('r')) { $('code').value = qs.get('r').toUpperCase().slice(0, 6); if (!$('nick').value) $('nick').focus(); }
+  ['nick', 'code'].forEach(id => $(id).addEventListener('keydown', e => { if (e.key === 'Enter') joinGame(); }));
+  if (typeof Peer === 'undefined') $('joinMsg').textContent = '連線模組載入失敗，請檢查網絡後重新整理。「自己練習」仍可用。 Could not load the network module. Solo practice still works.';
+
+  // 測試用：網址加 #preview=3 直接看第 3 關全部 6 個差異
   const pv = /#preview=(\d+)/.exec(location.hash);
   if (pv) {
     const lv = Math.max(1, Math.min(LV, +pv[1])) - 1;
-    S = { phase: 'between', rid: 'pv', seed: 1, lv, found: [], scores: [0, 0], miss: [0, 0], hist: [], timeout: true, left: 9e9, solo: true, players: [blankP('Preview')] };
-    show('game'); renderGame(); picSel = SCENES[lv].diffs.map((_, i) => i);
-    $('picB').innerHTML = `<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">${SCENES[lv].draw(() => true)}<g class="marks"></g><g class="fx"></g></svg>`;
-    SCENES[lv].diffs.forEach(d => addMark(d, -1));
+    client.st = { phase: 'reveal', lv, rid: 'pv', seed: 1, left: 9e9, n: 1 };
+    client.key = 'pv:' + lv; show('game'); ensurePics();
+    $('picB').innerHTML = picSVG(lv, [0, 1, 2, 3, 4, 5], true);
+    client.sel = [0, 1, 2, 3, 4, 5]; client.revealed = false; renderClient();
   }
-
-  $('nick').value = store('md-nick') || '';
+  window.__spot = { get host() { return host; }, client, DIFFS, pickDiffs };
 })();
 </script>
 </body>
