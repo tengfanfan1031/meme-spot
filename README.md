@@ -1,13 +1,13 @@
 # 找不同大賽 Spot the Difference
 
-A group spot-the-difference game for team lunches. One computer hosts on the TV; up to about 60 colleagues join on their phones by scanning a QR code. A full game takes about 5 minutes.
+A group spot-the-difference game for team lunches. One computer hosts on the TV; up to about 60 colleagues join on their phones by scanning a QR code. A full game takes up to about 9 minutes (usually less, because a round ends as soon as everyone is done).
 
 **Play:** https://tengfanfan1031.github.io/meme-spot/
 
 ## How it works
 
-- 8 rounds of real photos, easy to hard. Each round shows two pictures with **3 differences** (picked at random from 6 prepared ones, so replays differ).
-- Everyone plays the same round at the same time on their own phone. Rounds last 20–30 seconds and end early once everybody is done.
+- 8 photos of Macau, easy to harder. Each round shows two pictures with **3 differences** (picked at random from 6 prepared ones, so replays differ).
+- Everyone plays the same round at the same time on their own phone. Each round lasts up to 60 seconds and ends early once everybody is done.
 - Score per round: 100 per difference found, plus a speed bonus (up to 500) for finding all 3. A wrong tap freezes you for 3 seconds.
 - The TV shows the pictures, a live progress board, who finished fastest, the answers after each round, the overall leaderboard, and a podium at the end.
 - The interface is bilingual (Traditional Chinese and English). The pictures contain no text.
@@ -25,16 +25,16 @@ Don't refresh the TV page during a game: the room lives in that browser tab. If 
 
 ## Photo credits
 
-All photos are from Wikimedia Commons and were edited to create the differences (a printed number on a boat, soy sauce packet print and apple stickers were also removed). The edited versions are shared under the same licenses.
+All photos are from Wikimedia Commons and were edited to create the differences. Any lettering, signs and inscriptions were removed so the pictures contain no text. The edited versions are shared under the same licenses.
 
-1. Harbour Junk — CEphoto, Uwe Aranas, CC BY-SA 3.0
-2. Burano Houses — kallerna, CC BY-SA 4.0
-3. Beach Umbrellas — Ввласенко, CC BY-SA 3.0
-4. Handmade Cups — Terragio67, CC BY-SA 4.0
-5. Oil Lamps — Satdeep Gill, CC BY-SA 4.0
-6. Sushi Box — Dllu, CC BY-SA 4.0
-7. The Peak at Dusk — Estial, CC BY-SA 4.0
-8. Apple Pile — Dietmar Rabich, CC BY-SA 4.0
+1. 龍環葡韻 Taipa Houses — Abasaa, public domain
+2. 觀音像 Kun Iam Statue — Diego Delso, CC BY-SA 3.0
+3. 嘉模聖母堂 Our Lady of Carmel Church — Yumeto, CC BY-SA 4.0
+4. 玫瑰堂 St. Dominic's Church — edwin.11, CC BY 2.0
+5. 漁人碼頭 Fisherman's Wharf — Diego Delso, CC BY-SA 3.0
+6. 路環市區 Coloane Village — LN9267, CC BY-SA 4.0
+7. 議事亭前地 Senado Square — Bahnfrend, CC BY-SA 4.0
+8. 大三巴牌坊 Ruins of St. Paul's — AwOiSoAk KaOsIoWa, CC BY-SA 3.0
 
 Links to each original are in the game under **相片來源 Photo credits**.
 
