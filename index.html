@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0f1420">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://0.peerjs.com wss://0.peerjs.com; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
 <title>找不同大賽 Spot the Difference</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -243,8 +245,8 @@ details a { color: var(--muted); }
   <div id="tvBody" style="flex:1;min-height:0;display:flex;flex-direction:column;position:relative"></div>
 </section>
 
-<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js" integrity="sha384-nlUQ8ZqCbvStErob+biJNzSgltf6urV3VGqhfIfzhmg9RXmpeRm76ELw0pYnKlTR" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha384-3zSEDfvllQohrq0PHL1fOXJuC/jSOO34H46t6UQfobFOmxE5BpjjaIJY5F2/bMnU" crossorigin="anonymous"></script>
 <script>
 (() => {
   // ================= 設定 =================
@@ -454,7 +456,7 @@ details a { color: var(--muted); }
     for (let i = idx.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [idx[i], idx[j]] = [idx[j], idx[i]]; }
     return idx.slice(0, PICK).sort((a, b) => a - b);
   }
-  let myPid = store('sd-pid'); if (!myPid) { myPid = 'p' + Math.random().toString(36).slice(2, 10); store('sd-pid', myPid); }
+  let myPid = store('sd-pid'); if (!/^[a-z0-9]{4,24}$/i.test(myPid || '')) { myPid = 'p' + Math.random().toString(36).slice(2).padEnd(10, '0').slice(0, 10); store('sd-pid', myPid); }
 
   // 音效（電視用）
   let ac = null;
@@ -500,16 +502,25 @@ details a { color: var(--muted); }
     let lobbyTimer = 0;
     H.lobbyBroadcast = () => { if (lobbyTimer) return; lobbyTimer = setTimeout(() => { lobbyTimer = 0; H.broadcast(); }, 400); };
 
+    // 清理名字：去掉控制字元、零寬字元和改變文字方向的字元，避免弄亂電視排名
+    const cleanNick = n => String(n ?? '').replace(/[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u2028-\u202e\u2060-\u206f\ufeff]/g, '').replace(/\s+/g, ' ').trim().slice(0, 12);
     H.join = (pid, nick, conn, local) => {
-      pid = String(pid || '').slice(0, 24); nick = String(nick || '').trim().slice(0, 12) || 'Player';
+      pid = String(pid ?? '');
+      if (!/^[a-z0-9]{4,24}$/i.test(pid)) return null;          // 不接受格式不對的玩家 ID
+      nick = cleanNick(nick) || 'Player';
       let P = H.players.get(pid);
       if (!P) {
         if (H.players.size >= MAXP) { try { conn && conn.send({ t: 'full' }); } catch {} return null; }
+        // 同名的話在後面加編號，例如「Alex 2」
+        const taken = new Set([...H.players.values()].map(p => p.nick));
+        if (taken.has(nick)) { let k = 2; while (taken.has(`${nick.slice(0, 9)} ${k}`)) k++; nick = `${nick.slice(0, 9)} ${k}`; }
         P = { pid, nick, score: 0, timeMs: 0, seq: H.joinSeq++, cur: null, last: null, hist: [] };
         H.players.set(pid, P);
-      }
+      } else nick = P.nick;                                      // 重新連線時保留原本的名字
       if (P.conn && P.conn !== conn) { try { P.conn.close(); } catch {} }
       Object.assign(P, { nick, conn, local: !!local, online: true });
+      // 比賽中途加入：讓他可以即時參與這一關
+      if (H.phase === 'play' && !(P.cur && P.cur.rid === H.rid && P.cur.lv === H.lv)) P.cur = { rid: H.rid, lv: H.lv, found: [], misses: 0, done: false, doneT: null };
       H.send(P, H.stMsg()); H.send(P, H.meMsg(P));
       if (H.phase === 'lobby') H.lobbyBroadcast();
       H.dirty = true; return P;
@@ -562,6 +573,8 @@ details a { color: var(--muted); }
         const c = P.cur, k = m.k | 0;
         if (H.phase !== 'play' || !c || m.rid !== H.rid || m.lv !== H.lv || c.done || k < 0 || k >= PICK || c.found.some(f => f.k === k)) return;
         const t = now() - H.t0;
+        // 人手不可能這樣快：開局 0.8 秒內或與上一個答案相隔少於 0.3 秒的，不計
+        if (!opt.solo && (t < 800 || (c.lastT != null && t - c.lastT < 300))) return;
         c.found.push({ k, t }); c.lastT = t;
         if (c.found.length >= PICK) {
           c.done = true; c.doneT = t;
@@ -601,9 +614,16 @@ details a { color: var(--muted); }
         tvFrame(); requestAnimationFrame(tvLoop);
       });
       p.on('connection', c => {
+        c._win = 0; c._cnt = 0;
         c.on('data', m => {
-          if (!m || typeof m !== 'object') return;
-          if (m.t === 'hi') { const P = host.join(m.pid, m.nick, c, false); if (P) c._pid = P.pid; return; }
+          // 限流：每秒超過 30 條訊息就斷開這條連線
+          const t = now(); if (t - c._win > 1000) { c._win = t; c._cnt = 0; }
+          if (++c._cnt > 30) { try { c.close(); } catch {} return; }
+          if (!m || typeof m !== 'object' || Array.isArray(m)) return;
+          if (m.t === 'hi') {
+            if (c._pid && c._pid !== m.pid) return;              // 一條連線只可以是一個玩家
+            const P = host.join(m.pid, m.nick, c, false); if (P) c._pid = P.pid; return;
+          }
           const P = c._pid && host.players.get(c._pid); if (P && P.conn === c) host.onMsg(P, m);
         });
         c.on('close', () => { const P = c._pid && host.players.get(c._pid); if (P && P.conn === c) host.leave(P); });
@@ -808,8 +828,28 @@ details a { color: var(--muted); }
     show('join');
   }
 
-  client.onMsg = m => {
-    if (!m || typeof m !== 'object') return;
+  const PHASES = ['lobby', 'count', 'play', 'reveal', 'final'];
+  const int = (v, lo, hi) => Number.isInteger(v) && v >= lo && v <= hi;
+  const num = v => (typeof v === 'number' && Number.isFinite(v) ? Math.round(v) : 0);
+  // 檢查主持送來的訊息，格式不對就不理（避免有人自己開房送奇怪資料）
+  function validMsg(m) {
+    if (!m || typeof m !== 'object' || Array.isArray(m)) return null;
+    if (m.t === 'full') return m;
+    if (m.t === 'st') {
+      if (!PHASES.includes(m.phase) || !int(m.lv, 0, LV - 1) || (m.rid !== null && typeof m.rid !== 'string')) return null;
+      return { t: 'st', phase: m.phase, lv: m.lv, rid: m.rid ? String(m.rid).slice(0, 32) : null, seed: num(m.seed) >>> 0, left: Math.max(0, Math.min(num(m.left), 600000)), n: Math.max(0, num(m.n)) };
+    }
+    if (m.t === 'me') {
+      const L = m.last && typeof m.last === 'object' ? { pts: num(m.last.pts), rank: num(m.last.rank), lv: num(m.last.lv), rid: String(m.last.rid ?? '') } : null;
+      return { t: 'me', score: num(m.score), rank: num(m.rank), of: num(m.of), found: Array.isArray(m.found) ? m.found.filter(k => int(k, 0, PICK - 1)) : [],
+        done: !!m.done, doneT: typeof m.doneT === 'number' && Number.isFinite(m.doneT) ? m.doneT : null, last: L,
+        top: Array.isArray(m.top) ? m.top.slice(0, 3).map(t => [String(Array.isArray(t) ? t[0] : '').slice(0, 16), num(Array.isArray(t) ? t[1] : 0)]) : [] };
+    }
+    return null;
+  }
+  client.onMsg = raw => {
+    const m = validMsg(raw);
+    if (!m) return;
     if (m.t === 'full') { leaving = true; $('joinMsg').textContent = '房間已滿。 The room is full.'; leaveGame(); return; }
     if (m.t === 'st') {
       client.st = m; client.deadline = now() + (+m.left || 0);
